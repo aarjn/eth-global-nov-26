@@ -4,8 +4,8 @@
 
 Built solo by [@aarjn](https://github.com/aarjn) for ETHGlobal Mumbai 2026 (Classic track). Sponsors: Whitechain, Arkiv, World. Everything runs on testnets. No real money is involved.
 
-- Demo video (3 min): `TODO(live): video URL`
-- Live app: `TODO(live): public web URL` (API: `TODO(live): public API URL`)
+- Demo video (3 min): `TODO(owner): video URL` (after the owner uploads it)
+- Live app: `PENDING(url)` (the demo stack runs on a private Tailscale address, `http://100.125.124.63`, which judges can't open; the coordinator must publish a public URL)
 - Submission text: [`docs/submission.md`](docs/submission.md)
 - Demo narration and shot list: [`docs/demo-script.md`](docs/demo-script.md)
 
@@ -46,20 +46,20 @@ Paying in a stablecoin fixes the cost and the wait. It creates new problems. The
 
 ## Screenshots
 
-Saved in `docs/screenshots/` (`TODO(live): add images and uncomment`).
+Captured by the live Playwright runs and saved in `apps/web/e2e/screenshots/`. Rows marked `PENDING(run3)` come from the recording run that is still in progress.
 
 | # | Screen | File |
 |---|---|---|
-| 1 | Merchant dashboard with a paid invoice and live update | `TODO(live): docs/screenshots/01-dashboard.png` |
-| 2 | Payer's phone: `/pay/<id>`, "Paid" state, no chain name | `TODO(live): docs/screenshots/02-pay-phone.png` |
-| 3 | Explorer page of the gasless USDT payment tx | `TODO(live): docs/screenshots/03-explorer-pay.png` |
-| 4 | Refund dialog and refund tx | `TODO(live): docs/screenshots/04-refund.png` |
-| 5 | CSV opened in a spreadsheet | `TODO(live): docs/screenshots/05-csv.png` |
-| 6 | Public receipt `/r/<id>` with "Open PDF on Swarm" | `TODO(live): docs/screenshots/06-receipt.png` |
-| 7 | The invoice entity on the Rabdi explorer | `TODO(live): docs/screenshots/07-arkiv-entity.png` |
-| 8 | `/invest`: note funded, then "transfer after maturity" revert | `TODO(live): docs/screenshots/08-invest.png` |
-| 9 | `/onboard`: World ID success badge, and the locked banner after cancel | `TODO(live): docs/screenshots/09-world.png` |
-| 10 | `/demo-store` next to its 19-line source | `TODO(live): docs/screenshots/10-demo-store.png` |
+| 1 | Merchant dashboard with a paid invoice and live update | `apps/web/e2e/screenshots/desktop-live-4-dashboard-paid.png` |
+| 2 | Payer's phone: `/pay/<id>`, "Paid" state, no chain name | `apps/web/e2e/screenshots/desktop-live-2-paid.png` |
+| 3 | Explorer page of the gasless USDT payment tx | `PENDING(run3)` |
+| 4 | Refund dialog and refund tx | `apps/web/e2e/screenshots/desktop-live-5-refund.png` |
+| 5 | CSV opened in a spreadsheet | `PENDING(run3)` |
+| 6 | Public receipt `/r/<id>` with "Open PDF on Swarm" | `apps/web/e2e/screenshots/desktop-live-7-swarm.png` |
+| 7 | The invoice entity on the Rabdi explorer | `PENDING(run3)` |
+| 8 | `/invest`: note funded, then "transfer after maturity" revert | `PENDING(run3)` |
+| 9 | `/onboard`: World ID success badge, and the locked banner after cancel | `apps/web/e2e/screenshots/world-success.png`, `apps/web/e2e/screenshots/world-cancel.png` |
+| 10 | `/demo-store` next to its 19-line source | `apps/web/e2e/screenshots/desktop-demo-store.png` |
 
 ## Architecture
 
@@ -277,30 +277,31 @@ The payments use the **official test USDT** `0xcedfB56113143d55b2358b8CFbB0dEB5A
 
 | Contract | Address | Verified source |
 |---|---|---|
-| PaymentRouter | `TODO(live): PaymentRouter address` | `TODO(live): explorer link to verified code` |
-| InvoiceNote | `TODO(live): InvoiceNote address` | `TODO(live): explorer link to verified code` |
+| PaymentRouter | `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005` | [verified code](https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005?tab=contract) |
+| InvoiceNote | `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7` | [verified code](https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7?tab=contract) |
 
-Deployer / owner: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. Relayer / operator: `0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F`. Machine-readable record: [`contracts/deployments/1874.json`](contracts/deployments/1874.json) (`deployed` is `false` until the deploy happens).
+Deployer / owner: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. Relayer / operator: `0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F`. Machine-readable record: [`contracts/deployments/1874.json`](contracts/deployments/1874.json) (`deployed` is `true`; deploy block 12343606).
 
 ### Transactions
 
 | Step | Tx hash | Explorer link |
 |---|---|---|
-| Deploy PaymentRouter | `TODO(live): tx hash` | `TODO(live): link` |
-| Deploy InvoiceNote | `TODO(live): tx hash` | `TODO(live): link` |
-| Gasless USDT payment (`payWithAuthorization`, payer paid no gas) | `TODO(live): tx hash` | `TODO(live): link` |
-| Partial refund (`refundWithSig`) | `TODO(live): tx hash` | `TODO(live): link` |
-| Note issued (`issueWithSig`) | `TODO(live): tx hash` | `TODO(live): link` |
-| Note funded by the investor (`fund`) | `TODO(live): tx hash` | `TODO(live): link` |
-| Payment forwarded to note escrow | `TODO(live): tx hash` | `TODO(live): link` |
-| Note settled in USDT (`settle`) | `TODO(live): tx hash` | `TODO(live): link` |
-| Transfer after maturity (reverts with `MaturityPassed`; shown as a failed simulation in the UI) | none (the call reverts before it is sent) | `TODO(live): screenshot` |
+| Deploy PaymentRouter | `0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf` | [tx](https://explorer.testnet.whitechain.io/tx/0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf) |
+| Deploy InvoiceNote | `0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf` | [tx](https://explorer.testnet.whitechain.io/tx/0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf) |
+| Gasless USDT payment (`payWithAuthorization`, payer paid no gas), 1.00 USDT, the first one | `0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e` | [tx](https://explorer.testnet.whitechain.io/tx/0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e) |
+| Gasless USDT payment, 4.90 USDT (live run 2) | `0x9957efd2d6d04ac8301c00990182dc0502c2899f0b58171b2c9cfa011f5c0c33` | [tx](https://explorer.testnet.whitechain.io/tx/0x9957efd2d6d04ac8301c00990182dc0502c2899f0b58171b2c9cfa011f5c0c33) |
+| Partial refund (`refundWithSig`), 0.90 USDT (live run 2) | `0x0405f8d08472299c173a757d0ab59eb6d06b93ecb1b1491e71d8f9d2fb3c5335` | [tx](https://explorer.testnet.whitechain.io/tx/0x0405f8d08472299c173a757d0ab59eb6d06b93ecb1b1491e71d8f9d2fb3c5335) |
+| Note issued (`issueWithSig`), note #1, face 1.00, price 0.95 (live run 2) | `0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea` | [tx](https://explorer.testnet.whitechain.io/tx/0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea) |
+| Note funded by the investor (`fund`) | `PENDING(run3)` | `PENDING(run3)` |
+| Payment forwarded to note escrow | `PENDING(run3)` | `PENDING(run3)` |
+| Note settled in USDT (`settle`) | `PENDING(run3)` | `PENDING(run3)` |
+| Transfer after maturity (reverts with `MaturityPassed`; shown as a failed simulation in the UI) | none (the call reverts before it is sent) | `PENDING(run3)` (screenshot) |
 
 ## Arkiv: writer wallet and a runnable query
 
 - **Writer wallet** (the only wallet that writes entities): `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. [Rabdi explorer page](https://rabdi.explorer.arkiv.network/address/0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb).
 - **Network:** Arkiv Rabdi testnet, chain id 7794095, RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`.
-- **Entity example:** `TODO(live): link to one invoice entity on the Rabdi explorer`
+- **Entity example:** the paid invoice A, with its `swarm_ref`, is linked in [`docs/submission.md`](docs/submission.md) (section Arkiv) and listed with the other entities in [`docs/live-run.md`](docs/live-run.md). The README does not repeat the 64-character key, because `scripts/verify-submission.ts` reads every such key in the README as a transaction hash.
 
 Run the query yourself. It reads the entities straight from Arkiv. It needs no API server, no database and no keys:
 
@@ -316,7 +317,18 @@ It prints the exact query it sends. For the demo merchant that is the equivalent
 arkiv.schema = "paisalink.invoices" AND merchant = 0xC038827b4E362B0de1Be859377508613CD028946 AND $owner = 0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb
 ```
 
-Output before any invoice exists: "no merchant entity yet" and "no invoices". After the demo it lists each invoice with its state, amount, pay tx and whether it has a `swarm_ref`. `TODO(live): paste the real output of this command here after the demo data exists.`
+Output before any invoice exists: "no merchant entity yet" and "no invoices". After the demo it lists each invoice with its state, amount, pay tx and whether it has a `swarm_ref`. Real output:
+
+```
+merchant @priya.designs  0xC038827b4E362B0de1Be859377508613CD028946  World ID verified: yes
+ invoice      state  usdt  due         memo                    paid_tx       swarm
+ 0x1ce3e36f…  open   1     2026-11-13  e2e invoice B mw4jzhbd
+ 0x8e9ab8f5…  paid   4.9   2026-11-13  e2e invoice A mw4jzhbd  0x9957efd2d6  yes
+ 0x62f167a2…  open   4.9   2026-11-13  e2e invoice A mw4jlyby
+ 0x92314a9d…  open   1     2026-11-07  W8 dry check (unpaid)
+4 invoice(s), 1 payment(s)
+```
+(Output of `bun run scripts/query.ts` on 7 Nov 2026 after live run 2. The table is condensed from the script's box drawing.)
 
 Judge files: [`arkiv/schema.md`](arkiv/schema.md), [`arkiv/friction.md`](arkiv/friction.md), [`arkiv/reach.md`](arkiv/reach.md), [`arkiv/why-arkiv.md`](arkiv/why-arkiv.md), [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md), [`arkiv/swarm.md`](arkiv/swarm.md).
 
@@ -342,7 +354,7 @@ bun test packages                                                    # 47 pass, 
 | Web tests (`apps/web`, includes `/invest` and `/onboard`) | 26 pass |
 | **Total** | **282 pass, 8 skip, 0 fail** |
 
-Skipped tests need live services: a live Swarm upload (`SWARM_LIVE=1`) and live Arkiv writes (they need a funded writer and an access key). Counts will change as tests are added. `TODO(live): re-run after the final commit and update these numbers.`
+Skipped tests need live services: a live Swarm upload (`SWARM_LIVE=1`) and live Arkiv writes (they need a funded writer and an access key). Counts will change as tests are added. `PENDING(final)`: the coordinator re-runs the suites after the final commit and updates these numbers.
 
 ## Current limitations
 
@@ -361,18 +373,18 @@ The code was written by Claude agents. Opus wrote the code. Sonnet wrote tests a
 
 ## Video chapters
 
-`TODO(live): fill in timestamps after the final cut.`
+`PENDING(cut)`: timestamps are filled in after the final cut.
 
 | Time | Chapter |
 |---|---|
-| `TODO(live)` | Problem |
-| `TODO(live)` | Invoice created (Arkiv entity) |
-| `TODO(live)` | Gasless pay on a phone |
-| `TODO(live)` | Live dashboard, refund |
-| `TODO(live)` | CSV and Swarm PDF |
-| `TODO(live)` | Sell the invoice, rule refusal, settle |
-| `TODO(live)` | World ID denied, then verified |
-| `TODO(live)` | What breaks without each sponsor |
+| `PENDING(cut)` | Problem |
+| `PENDING(cut)` | Invoice created (Arkiv entity) |
+| `PENDING(cut)` | Gasless pay on a phone |
+| `PENDING(cut)` | Live dashboard, refund |
+| `PENDING(cut)` | CSV and Swarm PDF |
+| `PENDING(cut)` | Sell the invoice, rule refusal, settle |
+| `PENDING(cut)` | World ID denied, then verified |
+| `PENDING(cut)` | What breaks without each sponsor |
 
 ## Licence
 

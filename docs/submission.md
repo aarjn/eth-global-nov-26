@@ -1,6 +1,6 @@
 # ETHGlobal submission text (Mumbai 2026)
 
-Copy each block into the form. Items marked `TODO(live)` or `TODO(owner)` must be filled in before you submit. Sponsors to pick on the form: **Whitechain, Arkiv, World** (Arkiv's Swarm bonus is selected with Arkiv and does not use a pick). Track: **Classic**.
+Copy each block into the form. Items marked `TODO(owner)` or `PENDING(...)` must be filled in before you submit. Sponsors to pick on the form: **Whitechain, Arkiv, World** (Arkiv's Swarm bonus is selected with Arkiv and does not use a pick). Track: **Classic**.
 
 ## Project name
 
@@ -9,11 +9,11 @@ PaisaLink
 ## Links
 
 - Repo: <https://github.com/aarjn/eth-global-nov-26>
-- Demo video: `TODO(live): video URL` (about 3:00, 1080p, the builder's own voice)
-- Live app: `TODO(live): public web URL`
-- Contracts: PaymentRouter `TODO(live): PaymentRouter address`, InvoiceNote `TODO(live): InvoiceNote address`
+- Demo video: `TODO(owner): video URL` (about 3:00, 1080p, the builder's own voice)
+- Live app: `PENDING(url)` (the demo stack is on a private Tailscale address; publish a public URL first)
+- Contracts: PaymentRouter `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005` ([explorer](https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005?tab=contract)), InvoiceNote `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7` ([explorer](https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7?tab=contract))
 - Arkiv writer wallet: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`
-- Arkiv entity example: `TODO(live): Arkiv entity link`
+- Arkiv entity example: <https://rabdi.explorer.arkiv.network/entity/0x2a687bca3e74ad2e7155e364a2bda5c7381b233df9fafd49357317c75f4ce648>
 
 ## Short description (about 100 characters)
 
@@ -93,8 +93,8 @@ Demo shortcuts (all labelled in the UI):
 
 ### Whitechain: common requirements
 
-- Contracts deployed and verified on Whitechain Sepolia (1874): `TODO(live): PaymentRouter address`, `TODO(live): InvoiceNote address`.
-- A payment in the official USDT (`0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7`) in the main flow: `TODO(live): gasless pay tx link`.
+- Contracts deployed and verified on Whitechain Sepolia (1874): `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005`, `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7`.
+- A payment in the official USDT (`0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7`) in the main flow: <https://explorer.testnet.whitechain.io/tx/0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e> (payer paid no gas; the relayer did).
 - Why onchain: README, "Why onchain settlement on Whitechain".
 - Feedback: `WHITECHAIN_FEEDBACK.md`.
 - Video shows merchant, payer and investor.
@@ -112,7 +112,7 @@ Demo shortcuts (all labelled in the UI):
 - **Writes to Arkiv's current testnet:** the API writes every merchant, invoice, payment and note as an Arkiv entity (Rabdi, 7794095). Writer: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`.
 - **A feature users see reads Arkiv:** the merchant dashboard, the pay page and the public receipt.
 - **Not "a log nothing reads":** there is no other database, so every page reads Arkiv.
-- **Swarm bonus (`arkiv/swarm.md`):** the invoice PDF is on Swarm. The plain reference is in the `swarm_ref` field of the invoice entity. Entity key + reference: `TODO(live): Arkiv entity key and Swarm reference link`. Service: Swarm Foundation public gateway (batch not visible to us, stated in the file).
+- **Swarm bonus (`arkiv/swarm.md`):** the invoice PDF is on Swarm. The plain reference is in the `swarm_ref` field of the invoice entity. Entity key + reference: entity key `0x2a687bca3e74ad2e7155e364a2bda5c7381b233df9fafd49357317c75f4ce648` (<https://rabdi.explorer.arkiv.network/entity/0x2a687bca3e74ad2e7155e364a2bda5c7381b233df9fafd49357317c75f4ce648>), `swarm_ref` `333fbd9dc996418560fef47a3d255003964b1890c530d0a005a19264543a3a30` (<https://api.gateway.ethswarm.org/bzz/333fbd9dc996418560fef47a3d255003964b1890c530d0a005a19264543a3a30/>). Service: Swarm Foundation public gateway (batch not visible to us, stated in the file).
 - Open-source licence: MIT. AI disclosure below.
 
 ### World: Best Use of IDKit
@@ -147,7 +147,7 @@ The repository was created after the hackathon started (Classic track, all code 
 ## Checklist before you press submit
 
 - [ ] Video link works and is 2 to 4 minutes, 1080p, your own voice.
-- [ ] All `TODO(live)` and `TODO(owner)` markers are gone from README, `arkiv/*.md`, `WHITECHAIN_FEEDBACK.md` and this file.
+- [ ] All `TODO` and `PENDING` markers are gone from README, `arkiv/*.md`, `WHITECHAIN_FEEDBACK.md` and this file.
 - [ ] Contract links open and show verified source.
 - [ ] `bun run scripts/query.ts` prints invoices on a clean machine.
 - [ ] Three partners picked: Whitechain, Arkiv, World. Swarm bonus selected with Arkiv.

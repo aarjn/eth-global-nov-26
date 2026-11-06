@@ -19,7 +19,8 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | Research and plan | Claude Fable | Reading the sponsor prize text, comparing tracks, writing `PLAN.md` and the track research in `research/` |
 | Coordinator | Claude (the session that ran the build) | Repo skeleton, briefs, merging, review, commits |
 | Code agents W1 to W7 | Claude Opus 5.5, high effort | Contracts, API and relayer, web and widget, Arkiv layer, financing, World ID, Swarm PDF |
-| Test agent S1, verify agent S2, paperwork agent S3 | Claude Sonnet 5.5 | Edge tests, end-to-end checks, README and docs |
+| Code agents W8 and R1 | Claude Opus 5.5, high effort | W8: live-flow prep (USDT pooling, faucet cap, live spec). R1: recording the demo footage live on testnet |
+| Test agent S1, verify agent S2, paperwork agent S3, live-run agent S4, fill-in agent S5 | Claude Sonnet 5.5 | Edge tests, end-to-end checks, README and docs, the live testnet run, filling in live evidence |
 | Human | aarjn | Product choices, approvals, wallets and sign-ins, phone testing, booth questions, own notes, voice narration, final submission |
 
 ## Workstreams and prompts
@@ -34,7 +35,12 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | W6 | `docs/prompts/W6-world.md` | Opus | World ID verification, `/onboard`, debrief |
 | W7 | `docs/prompts/W7-swarm.md` | Opus | Invoice PDF and Swarm upload |
 | S1 | no saved prompt (brief in the coordinator session) | Sonnet | Edge and fuzz tests |
-| S3 | `TODO(owner): save the S3 brief as docs/prompts/S3-paperwork.md` | Sonnet | README, this file, feedback files, `arkiv/*.md`, submission text, demo script |
+| S2 | `docs/prompts/S2-verify.md` | Sonnet | `docs/verification.md`, `scripts/verify-submission.ts`, Playwright specs |
+| W8 | `docs/prompts/W8-live-flow.md` | Opus | `scripts/pool-usdt.ts`, faucet amount cap (`apps/api/src/demo.ts`, `/pay` and `/invest` pages), `.env.override` values, live spec amounts |
+| S4 | `docs/prompts/S4-live-run.md` | Sonnet | The live testnet run 2, `docs/live-run.md` |
+| R1 | `docs/prompts/R1-record-demo.md` | Opus | `apps/web/e2e/record/*`, `scripts/mux-video.sh`, `recordings/` clips, the run 3 section of `docs/live-run.md` |
+| S5 | `docs/prompts/S5-fill-live.md` | Sonnet | Live evidence in `README.md` and `docs/submission.md`, `docs/demo-script.md` amounts, `docs/owner-todo.md`, this file |
+| S3 | `docs/prompts/S3-paperwork.md` | Sonnet | README, this file, feedback files, `arkiv/*.md`, submission text, demo script |
 | Common rules | `docs/prompts/common.md` | all | Rules every agent follows (no secrets, no git, file ownership) |
 
 ## Files and who wrote them
@@ -121,7 +127,12 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | `docs/WORLD_DEBRIEF.md` | Opus (W6) | Human adds the real-simulator timing |
 | `docs/feedback/arkiv-sdk-notes.md` | Opus (W4) | Raw notes from the build |
 | `docs/submission.md`, `docs/demo-script.md` | Sonnet (S3) | The human reads and edits the script before recording |
-| `docs/verification.md`, `scripts/verify-*.ts`, `apps/web/e2e/**` | Sonnet (S2) | `TODO(owner): list if these land; not in the repo at the time of writing` |
+| `docs/verification.md`, `scripts/verify-submission.ts`, `apps/web/e2e/pages.spec.ts`, `world-live.spec.ts`, `playwright.config.ts`, `helpers.ts` | Sonnet (S2) | Verification report and the submission checker |
+| `apps/web/e2e/live.spec.ts` | Sonnet (S2), amounts changed by Opus (W8) | Live testnet spec |
+| `scripts/pool-usdt.ts` | Opus (W8) | Moves test USDT with signed transfers |
+| `docs/live-run.md` | Sonnet (S4), run 3 section by Opus (R1) | Live run evidence: tx hashes, Arkiv entities, balances |
+| `apps/web/e2e/record/*`, `scripts/mux-video.sh`, `recordings/README.txt` | Opus (R1) | Demo footage recorder and the audio/video joiner. Clips in `recordings/` are not committed |
+| `docs/owner-todo.md`, the live evidence and amounts in `README.md`, `docs/submission.md`, `docs/demo-script.md` | Sonnet (S5) | Filled from `contracts/deployments/1874.json`, `docs/live-run.md` and on-chain receipts |
 
 ## Code Garage items used
 

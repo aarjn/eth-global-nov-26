@@ -4,25 +4,25 @@ Read this aloud in your own voice. The video must use your real voice, not text-
 
 How to use it: record the audio one chapter at a time, so a bad take only costs one chapter. Speak at a calm pace, about 2.5 words a second. Each chapter has a time budget. If you run over, cut a sentence, don't talk faster.
 
-Amounts on screen: use the real ones from the recording. The script avoids exact amounts where they may change. Say the real numbers if you want to. `TODO(owner): match the invoice amount (49 USDT in the plan), the refund (9 USDT) and the note amounts to what the recording shows.`
+Amounts on screen: the recording uses an invoice of 1.00 USDT, a refund of 0.20, a note with face value 0.50 sold for 0.45, and a maturity of 5 minutes (demo setting). The narration says these amounts.
 
 ## Narration and shot list, side by side
 
 | # | Time | Narration (read this) | On screen (shot list) |
 |---|---|---|---|
 | 1 | 0:00 to 0:14 | A freelancer in India bills a client abroad. Banks and cards take three to six percent, and the money takes days. PaisaLink gets them paid in USDT, and the client has nothing to learn. | Title card: **PaisaLink**, then the big number "3 to 6 %". Cut to `/merchant`. |
-| 2 | 0:14 to 0:28 | I create an invoice for forty-nine USDT. It becomes an entity on Arkiv. Arkiv is our only database. And I get a payment link. | `/merchant` (demo merchant, "testnet demo wallet" tag visible). Fill amount, due date, note. Click Create. The link appears. Copy it. |
+| 2 | 0:14 to 0:28 | I create an invoice for one USDT. It becomes an entity on Arkiv. Arkiv is our only database. And I get a payment link. | `/merchant` (demo merchant, "testnet demo wallet" tag visible). Fill amount (1.00), due date, note. Click Create. The link appears. Copy it. |
 | 3 | 0:28 to 0:55 | The client opens the link on a phone. They tap Pay. No gas. No seed phrase. No chain name. They only sign a message. Our relayer sends it to the official USDT on Whitechain and pays the fee. Here is the transaction on the explorer. | Phone view of `/pay/<id>` (browser phone emulation, 390 px wide). Tap Pay. "Paid" screen. Then the explorer tab with the USDT tx. Point at `receiveWithAuthorization` / the USDT token transfer and the relayer as sender. |
-| 4 | 0:55 to 1:10 | The dashboard updated by itself. It reads Arkiv live. Now a refund. A few USDT back to the client, in one click. The router only sends it back to whoever paid. | Back to `/merchant`, window side by side if possible: status flips to Paid without a reload. Click Refund, enter the partial amount, confirm. Show the refund tx link. |
+| 4 | 0:55 to 1:10 | The dashboard updated by itself. It reads Arkiv live. Now a refund: twenty cents back to the client, in one click. The router only sends it back to whoever paid. | Back to `/merchant`, window side by side if possible: status flips to Paid without a reload. Click Refund, enter 0.20, confirm. Show the refund tx link. |
 | 5 | 1:10 to 1:22 | The accountant gets a CSV with every invoice and every transaction link. And a separate shop can add this checkout in nineteen lines. | Click **Export CSV**; open the file in a spreadsheet. Quick cut to `/demo-store` with `StoreCheckout.tsx` source on screen. |
-| 6 | 1:22 to 1:42 | Now the exporter wants cash today. They sell an invoice as a note. Only an approved investor can fund it, at a discount, in USDT. The money reaches the merchant in one transaction. | `/merchant`: **Sell this invoice**. `/invest`: issue the note. Switch to the investor view (demo investor wallet, "demo compliance desk" tag in view). Click Fund. Show the fund tx. |
-| 7 | 1:42 to 1:57 | Now the rule. Time is up, so the note is past maturity. The investor tries to transfer it. The contract says no. This rule lives in Solidity, not in the app. | `/invest`: after the maturity timer ends, click **Transfer** (the "transfer after maturity" button). Show the revert reason `MaturityPassed`. Hold on it for two seconds. |
-| 8 | 1:57 to 2:07 | Maturity passed, so settle works. The investor is paid the full face value, in USDT. One full lifecycle, on chain. | Click **Settle**. Show the settle tx link and the note state turning to Settled. |
+| 6 | 1:22 to 1:42 | Now the exporter wants cash today. They sell a note with a face value of fifty cents, for forty-five. Only an approved investor can fund it, in USDT. The money reaches the merchant in one transaction. | `/merchant`: **Sell this invoice**. `/invest`: issue the note. Switch to the investor view (demo investor wallet, "demo compliance desk" tag in view). Click Fund. Show the fund tx. |
+| 7 | 1:42 to 1:57 | Now the rule. In this demo a note matures in five minutes, and that time is up. The investor tries to transfer it. The contract says no. This rule lives in Solidity, not in the app. | `/invest`: after the maturity timer ends, click **Transfer** (the "transfer after maturity" button). Show the revert reason `MaturityPassed`. Hold on it for two seconds. |
+| 8 | 1:57 to 2:07 | Maturity passed, so settle works. The investor is paid the full face value, fifty cents, in USDT. One full lifecycle, on chain. | Click **Settle**. Show the settle tx link and the note state turning to Settled. |
 | 9 | 2:07 to 2:17 | The receipt is a PDF on Swarm. The Arkiv entity holds only the reference. The file is on Swarm, and the pointer is on Arkiv. | `/r/<id>`: click **Open PDF on Swarm**, the PDF opens from the gateway. Cut to the Rabdi explorer entity page, highlight `swarm_ref`. |
-| 10 | 2:17 to 2:42 | Who may spend our gas? One human, one budget. This merchant checks in with World ID, Proof of Human. The badge turns on. Now a second merchant cancels the check. The gasless path stays locked, and the relayer refuses. They can still pay with their own wallet. | `/onboard` for merchant A: IDKit dialog, simulator approves, "Verified" badge. Then merchant B (reset the demo merchant wallet): open IDKit, close it. Show the "Gas-sponsored checkout locked" banner and a relay attempt answering `MERCHANT_NOT_VERIFIED`. |
+| 10 | 2:17 to 2:42 | Who may spend our gas? One human, one budget. This merchant is already verified with World ID, Proof of Human. The badge shows it. Now a second merchant cancels the check. The gasless path stays locked, and the relayer refuses. They can still pay with their own wallet. | `/onboard` for the demo merchant, who is already verified: the "Verified" badge. Then merchant B (a fresh browser profile): open IDKit, close it. Show the "Gas-sponsored checkout locked" banner and a relay attempt answering `MERCHANT_NOT_VERIFIED`. |
 | 11 | 2:42 to 3:00 | Without Whitechain, there is no USDT settlement and no rules. Without Arkiv, there is no data. Without Swarm, no lasting receipt. Without World, anyone can drain our gas. Next: mainnet, real compliance checks, and merchant-owned data. Thank you. | Architecture diagram (from the README) with four logos or labels. Last frame: repo URL and "Everything shown is live on testnet." |
 
-About 440 spoken words in total.
+About 360 spoken words in total. Every chapter stays under 2.5 words a second.
 
 ## Chapter audio files
 
@@ -31,12 +31,12 @@ Record one file per chapter and name it `ch01.m4a` to `ch11.m4a`. The coordinato
 ## Before you record (prep checklist)
 
 1. The API and web app are running. `GET /health` shows `ok: true`, a relayer WBT balance and Arkiv `canWrite: true`.
-2. The demo payer has test USDT at least equal to the invoice (and the note price, for the investor). Use `scripts/fund-demo.ts`.
+2. The demo payer has test USDT at least equal to the invoice (1.00), and the investor has the note price (0.45). Use `scripts/fund-demo.ts`.
 3. The demo investor has been allowlisted through the demo compliance desk, and has some WBT for gas.
-4. The demo merchant has completed World ID once (for the "verified" take). Have a second, fresh browser profile ready for the cancelled take.
+4. The demo merchant is already World ID verified (the badge take). Have a second, fresh browser profile ready for the cancelled take.
 5. Browser at 1920 x 1080, zoom so text is readable. Hide bookmarks and notifications.
 6. Tabs ready: `/merchant`, a phone-emulated `/pay/<id>`, the explorer, the Rabdi explorer, `/invest`, `/onboard`, `/demo-store`.
-7. Note maturity is short (about 120 seconds). Start the note before chapter 6 so the maturity timer has ended by chapter 7, or record 6, 7 and 8 as separate takes.
+7. Note maturity is 5 minutes (demo setting). Start the note before chapter 6 so the maturity timer has ended by chapter 7, or record 6, 7 and 8 as separate takes.
 8. Every shortcut is labelled on screen: "testnet demo wallet", the faucet label, the compliance desk label. Don't hide them.
 
 ## Rules for the recording
@@ -61,4 +61,4 @@ Record one file per chapter and name it `ch01.m4a` to `ch11.m4a`. The coordinato
 
 ## Timestamps for the README
 
-After the final cut, copy the real start time of each chapter into the "Video chapters" table in `README.md`. `TODO(live): replace the planned times above with the real ones.`
+After the final cut, copy the real start time of each chapter into the "Video chapters" table in `README.md`. The times in the table above are planned. Replace them with the real ones.
