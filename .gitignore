@@ -16,3 +16,6 @@ apps/web/playwright-report/
 video/raw/
 .env.override
 *.recovery.lock
+
+# demo-video footage (apps/web/e2e/record/record-demo.ts, scripts/mux-video.sh)
+recordings/
