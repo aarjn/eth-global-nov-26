@@ -8,8 +8,9 @@ import { usdtBalance, parseUsdt, formatUsdt } from "../../lib/chain";
 import { explorerTxUrl, getRouterAddress, receiptLink } from "../../lib/config";
 import { dateStr, inr, money } from "../../lib/format";
 import { getLocalAccount } from "../../lib/wallet";
+import { selfPay, type SelfPayStep } from "../../lib/selfPay";
 
-type Phase = "idle" | "funding" | "approving" | "sending" | "paid";
+type Phase = "idle" | "funding" | "approving" | "sending" | "selfpay" | "paid";
 type Payer = { kind: "demo"; address: Address } | { kind: "injected"; address: Address };
 
 const eth = () => (window as unknown as { ethereum?: EIP1193Provider }).ethereum;
@@ -34,6 +35,9 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
   const [result, setResult] = useState<RelayResponse | null>(null);
   /** undefined = checking, null = contracts not deployed / not configured yet */
   const [router, setRouter] = useState<Address | null | undefined>(undefined);
+  const [errCode, setErrCode] = useState<string | null>(null);
+  const [selfStep, setSelfStep] = useState<SelfPayStep | null>(null);
+  const [selfPaid, setSelfPaid] = useState(false);
 
   const loadInvoice = useCallback(async () => {
     try {
@@ -117,8 +121,25 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
       post({ type: "paid", invoiceId, txHash: res.txHash, explorerUrl: res.explorerUrl || explorerTxUrl(res.txHash), receiptUrl: receiptLink(invoiceId) });
       void refreshBalance();
     } catch (e) {
-      setErr(friendlyError(e)); setPhase("idle");
+      setErr(friendlyError(e)); setErrCode(e instanceof ApiError ? e.code ?? null : null); setPhase("idle");
     }
+  };
+
+  /** Fallback when sponsored checkout is unavailable: the payer's own wallet calls PaymentRouter.pay() and pays the fee. */
+  const paySelf = async () => {
+    if (!invoice) return;
+    setErr(null); setPhase("selfpay");
+    try {
+      const to = router ?? (await getRouterAddress());
+      const r = await selfPay({ router: to, invoiceId: invoice.invoiceId, amount, onStep: setSelfStep });
+      // Ask the API to mirror the on-chain payment into Arkiv (optional endpoint; the payment is final either way).
+      void api.post(`/invoices/${invoice.invoiceId}/sync`, { txHash: r.txHash }).catch(() => {});
+      const res = { txHash: r.txHash, explorerUrl: explorerTxUrl(r.txHash) };
+      setResult(res); setSelfPaid(true); setPhase("paid");
+      post({ type: "paid", invoiceId, txHash: res.txHash, explorerUrl: res.explorerUrl, receiptUrl: receiptLink(invoiceId) });
+    } catch (e) {
+      setErr(friendlyError(e)); setPhase("idle");
+    } finally { setSelfStep(null); }
   };
 
   const pickInjected = async () => {
@@ -133,7 +154,9 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
 
   const handleName = merchant?.handle ?? invoice?.merchantHandle ?? null;
   const handle = handleName ? `@${handleName}` : "the merchant";
-  const busy = phase === "approving" || phase === "sending" || phase === "funding";
+  const busy = phase === "approving" || phase === "sending" || phase === "funding" || phase === "selfpay";
+  const offerSelfPay = invoice?.gaslessAvailable === false || errCode === "MERCHANT_NOT_VERIFIED";
+  const selfLabel = { connecting: "Connecting your wallet…", approving: "Approve USDT in your wallet…", paying: "Confirm the payment in your wallet…", confirming: "Confirming…" };
 
   return <div className={cx("flex min-h-dvh flex-col bg-gradient-to-b from-brand-50 via-canvas to-canvas", embed && "min-h-[100dvh]")}>
     {!embed && <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 pt-5"><Logo className="text-lg" /><span className="flex items-center gap-1 text-xs font-semibold text-ink-500">
@@ -147,7 +170,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
         <p className="text-2xl font-bold">Payment link not found</p>
         <p className="mt-2 text-ink-500">Check the link with the person who sent it.</p></div>}
 
-      {invoice && phase === "paid" && result && <Success invoice={invoice} handle={handle} result={result} embed={embed} />}
+      {invoice && phase === "paid" && result && <Success invoice={invoice} handle={handle} result={result} embed={embed} selfPaid={selfPaid} />}
 
       {invoice && phase !== "paid" && <>
         <section className="animate-rise rounded-[2rem] bg-white p-6 shadow-card ring-1 ring-ink-900/5">
@@ -163,11 +186,12 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
           <p className="tabular mt-2 text-sm text-ink-500">{inr(invoice.amountUsdt)} · 1 USDT = 1 US dollar</p>
           {invoice.memo && <p className="mt-5 rounded-2xl bg-ink-50 px-4 py-3 text-sm text-ink-700">{invoice.memo}</p>}
           <div className="mt-4 flex justify-between text-sm"><span className="text-ink-500">Due</span><span className="font-semibold">{dateStr(invoice.dueAt)}</span></div>
-          <div className="mt-1 flex justify-between text-sm"><span className="text-ink-500">Fees for you</span><span className="font-semibold text-brand-700">None</span></div>
+          <div className="mt-1 flex justify-between text-sm"><span className="text-ink-500">Fees for you</span>{offerSelfPay ? <span className="font-semibold text-amber-700">Small network fee</span> : <span className="font-semibold text-brand-700">None</span>}</div>
         </section>
 
         {payable && invoice.gaslessAvailable === false && <div className="mt-4"><Alert tone="amber">
-          Free checkout isn't switched on for this merchant yet (they haven't finished verification). You can still try; if it's refused, nothing is charged.
+          Free checkout isn't switched on for this merchant yet (they haven't finished verification), so PaisaLink can't cover the network fee.
+          You can pay from your own wallet below and pay the small fee yourself.
         </Alert></div>}
 
         {!payable && <div className="mt-5"><Alert tone="brand">
@@ -189,6 +213,13 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
             {phase === "funding" ? "Adding test USDT…" : phase === "approving" ? "Approving…" : phase === "sending" ? "Sending payment…" : `Pay ${money(invoice.amountUsdt)} USDT`}
           </Button>}
 
+          {offerSelfPay && <div className="mt-3">
+            <Button variant="secondary" className="w-full py-3.5" onClick={paySelf} loading={phase === "selfpay"} disabled={busy || !eth()} data-testid="self-pay-button">
+              {phase === "selfpay" && selfStep ? selfLabel[selfStep] : "Pay with my own wallet (I pay the network fee)"}
+            </Button>
+            <p className="mt-1.5 text-center text-xs text-ink-500">{eth() ? "Uses your browser wallet: one approval, one payment. Needs a little WBT for the fee." : "Needs a browser wallet such as MetaMask."}</p>
+          </div>}
+
           <div className="mt-4 flex flex-col items-center gap-2 text-center">
             {payer.kind === "demo" ? <DemoWalletTag address={payer.address} role="payer" /> :
               <span className="text-xs font-semibold text-ink-600">Paying from your wallet · {payer.address.slice(0, 6)}…{payer.address.slice(-4)}</span>}
@@ -202,7 +233,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
   </div>;
 }
 
-function Success({ invoice, handle, result, embed }: { invoice: Invoice; handle: string; result: RelayResponse; embed: boolean }) {
+function Success({ invoice, handle, result, embed, selfPaid }: { invoice: Invoice; handle: string; result: RelayResponse; embed: boolean; selfPaid: boolean }) {
   const explorer = result.explorerUrl || explorerTxUrl(result.txHash);
   return <div className="flex flex-1 flex-col items-center pt-8 text-center" data-testid="paid">
     <span className="animate-pop flex size-24 items-center justify-center rounded-full bg-brand-600 text-white shadow-brand">
@@ -217,6 +248,6 @@ function Success({ invoice, handle, result, embed }: { invoice: Invoice; handle:
       <a href={explorer} target="_blank" rel="noreferrer" className="block w-full rounded-2xl bg-white py-3.5 font-semibold text-ink-800 ring-1 ring-ink-900/10 hover:bg-ink-50">Public payment record</a>
       {embed && <button type="button" onClick={() => post({ type: "close" })} className="w-full py-2 text-sm font-semibold text-ink-500">Done</button>}
     </div>
-    <p className="mt-6 text-xs text-ink-400">No fees were charged to you.</p>
+    <p className="mt-6 text-xs text-ink-400">{selfPaid ? "Paid from your own wallet; you covered the network fee." : "No fees were charged to you."}</p>
   </div>;
 }

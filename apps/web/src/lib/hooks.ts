@@ -30,7 +30,7 @@ const cacheKey = (w: string) => `paisalink.cache.invoices.${w.toLowerCase()}`;
  * server-sent event when /merchants/:wallet/events exists, and polls every 4 s as a fallback.
  * Keeps the last good read (also in localStorage) so a slow node never blanks the dashboard.
  */
-export function useInvoices(wallet: Address) {
+export function useInvoices(wallet: Address, opts: { onEvent?: () => void } = {}) {
   const [invoices, setInvoices] = useState<Invoice[] | null>(() => {
     try { const c = localStorage.getItem(cacheKey(wallet)); return c ? (JSON.parse(c).invoices as Invoice[]) : null; } catch { return null; }
   });
@@ -38,6 +38,8 @@ export function useInvoices(wallet: Address) {
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState(false);
   const inflight = useRef(false);
+  const onEvent = useRef(opts.onEvent);
+  onEvent.current = opts.onEvent;
 
   const refresh = useCallback(async () => {
     if (inflight.current) return;
@@ -64,7 +66,10 @@ export function useInvoices(wallet: Address) {
     try {
       es = new EventSource(api.url(`/merchants/${wallet}/events`));
       es.onopen = () => setLive(true);
-      es.onmessage = () => void refresh();
+      // The API names events "change" (invoice/payment/note, incl. World ID verification); refetch on each.
+      const on = () => { void refresh(); onEvent.current?.(); };
+      es.onmessage = on;
+      es.addEventListener("change", on);
       es.onerror = () => { setLive(false); es?.close(); };
     } catch { /* no SSE: polling only */ }
     const onFocus = () => void refresh();
@@ -94,4 +99,21 @@ export function useServiceStatus() {
     return () => { stop = true; clearInterval(t); };
   }, []);
   return status;
+}
+
+/** Invoice ids (lowercase) of this merchant that have an InvoiceNote (sold for cash). Their payment goes to note escrow. */
+export function useNotedInvoices(wallet: Address) {
+  const [ids, setIds] = useState<Set<string>>(() => new Set());
+  const refresh = useCallback(async () => {
+    try {
+      const r = await api.get<{ notes: { invoiceId: string }[] }>(`/notes?issuer=${wallet}`);
+      setIds(new Set((r.notes ?? []).map((n) => n.invoiceId.toLowerCase())));
+    } catch { /* notes API not available: keep the last known set */ }
+  }, [wallet]);
+  useEffect(() => {
+    void refresh();
+    const t = setInterval(refresh, 15000);
+    return () => clearInterval(t);
+  }, [refresh]);
+  return { noted: ids, refresh };
 }

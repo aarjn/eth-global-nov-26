@@ -9,7 +9,7 @@ import { Link } from "../../lib/router";
 import { refundInvoice, type RefundResult } from "../../lib/sign";
 import { CopyButton } from "./CopyButton";
 
-export function InvoiceList({ invoices, account, onChanged }: { invoices: Invoice[] | null; account: PrivateKeyAccount; onChanged: () => void }) {
+export function InvoiceList({ invoices, account, noted, onChanged }: { invoices: Invoice[] | null; account: PrivateKeyAccount; noted?: Set<string>; onChanged: () => void }) {
   return <Card className="overflow-hidden">
     <div className="flex items-center justify-between border-b border-ink-900/5 px-5 py-4">
       <h2 className="text-lg font-bold">Invoices</h2>
@@ -21,12 +21,12 @@ export function InvoiceList({ invoices, account, onChanged }: { invoices: Invoic
       <p className="mt-1 text-sm text-ink-500">Create your first payment link. It shows up here, and turns green the moment it's paid.</p>
     </div>}
     <ul className="divide-y divide-ink-900/5">
-      {invoices?.map((inv) => <InvoiceRow key={inv.invoiceId} inv={inv} account={account} onChanged={onChanged} />)}
+      {invoices?.map((inv) => <InvoiceRow key={inv.invoiceId} inv={inv} account={account} financed={inv.state === "financed" || !!noted?.has(inv.invoiceId.toLowerCase())} onChanged={onChanged} />)}
     </ul>
   </Card>;
 }
 
-function InvoiceRow({ inv, account, onChanged }: { inv: Invoice; account: PrivateKeyAccount; onChanged: () => void }) {
+function InvoiceRow({ inv, account, financed, onChanged }: { inv: Invoice; account: PrivateKeyAccount; financed: boolean; onChanged: () => void }) {
   const [refundOpen, setRefundOpen] = useState(false);
   const overdue = inv.state === "open" && inv.dueAt * 1000 < Date.now();
   return <li className={`px-5 py-4 transition-colors ${inv.state === "paid" ? "bg-brand-50/40" : ""}`} data-testid="invoice-row" data-state={inv.state}>
@@ -43,13 +43,17 @@ function InvoiceRow({ inv, account, onChanged }: { inv: Invoice; account: Privat
       <div className="flex flex-wrap items-center gap-2">
         {inv.state === "open" && <>
           <CopyButton text={payLink(inv.invoiceId)} label="Copy link" />
-          <Link href={`/invest?invoice=${inv.invoiceId}`} className="rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800 ring-1 ring-violet-200 hover:bg-violet-100">Sell this invoice</Link>
+          {!financed && <Link href={`/invest?invoice=${inv.invoiceId}`} className="rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800 ring-1 ring-violet-200 hover:bg-violet-100">Sell this invoice</Link>}
         </>}
         {inv.state !== "open" && <Link href={`/r/${inv.invoiceId}`} className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-ink-800 ring-1 ring-ink-900/10 hover:bg-ink-50">Receipt</Link>}
-        {inv.state === "paid" && !refundOpen && <button type="button" onClick={() => setRefundOpen(true)}
+        {inv.state === "paid" && !financed && !refundOpen && <button type="button" onClick={() => setRefundOpen(true)}
           className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50">Refund</button>}
       </div>
     </div>
+    {financed && (inv.state === "paid" || inv.state === "financed") && <p className="mt-2 text-xs font-medium text-violet-800">
+      Financed: {inv.state === "paid" ? "the payment is in escrow for the investor" : "funds will be held in escrow for the investor when the client pays"}, so it can't be refunded here.{" "}
+      <Link href={`/invest?invoice=${inv.invoiceId}`} className="underline">View note</Link>
+    </p>}
     {(inv.payTx || (inv as Invoice & { arkivUrl?: string }).arkivUrl) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
       {inv.payTx && <TxLink hash={inv.payTx} label="Payment transaction" />}
       {(inv as Invoice & { arkivUrl?: string }).arkivUrl && <a href={(inv as Invoice & { arkivUrl?: string }).arkivUrl} target="_blank" rel="noreferrer"

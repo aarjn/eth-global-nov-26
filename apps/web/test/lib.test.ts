@@ -52,3 +52,10 @@ describe("format", () => {
     expect(short("0x32c84603C9848FFa470FB07C9bCe820944D04c52")).toBe("0x32c8…4c52");
   });
 });
+
+describe("self-paid fallback", () => {
+  test("refuses clearly when there is no browser wallet", async () => {
+    const { selfPay } = await import("../src/lib/selfPay");
+    await expect(selfPay({ router: ROUTER, invoiceId: INVOICE, amount: 1n })).rejects.toThrow(/No browser wallet/);
+  });
+});

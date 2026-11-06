@@ -3,7 +3,7 @@ import type { Invoice, Merchant } from "@paisalink/shared";
 import { Shell } from "../../components/Shell";
 import { Alert, Badge, Button, Card, DemoWalletTag, Field, inputCls } from "../../components/ui";
 import { api, friendlyError } from "../../lib/api";
-import { useInvoices, useMerchant, useServiceStatus, useTick } from "../../lib/hooks";
+import { useInvoices, useMerchant, useNotedInvoices, useServiceStatus, useTick } from "../../lib/hooks";
 import { getLocalAccount } from "../../lib/wallet";
 import { ago, inr, money } from "../../lib/format";
 import { Link } from "../../lib/router";
@@ -13,8 +13,11 @@ import { InvoiceList } from "./InvoiceList";
 export default function MerchantPage() {
   const account = useMemo(() => getLocalAccount("merchant"), []);
   const wallet = account.address;
-  const { merchant, error: merchantError, setMerchant } = useMerchant(wallet);
-  const { invoices, syncedAt, error, live, refresh, setInvoices } = useInvoices(wallet);
+  const { merchant, error: merchantError, setMerchant, refresh: refreshMerchant } = useMerchant(wallet);
+  const { noted, refresh: refreshNotes } = useNotedInvoices(wallet);
+  // Any server event (payment, refund, note, World ID verification) also refreshes the profile and notes,
+  // so the verified badge and the financed markers flip without waiting for a poll.
+  const { invoices, syncedAt, error, live, refresh, setInvoices } = useInvoices(wallet, { onEvent: () => { void refreshMerchant(); void refreshNotes(); } });
   const service = useServiceStatus();
   const [toast, setToast] = useState<string | null>(null);
   const prev = useRef<Map<string, string>>(new Map());
@@ -93,7 +96,7 @@ export default function MerchantPage() {
       <div className="lg:sticky lg:top-20 lg:self-start">
         <CreateInvoice wallet={wallet} disabled={merchant === null} onCreated={onCreated} />
       </div>
-      <InvoiceList invoices={invoices} account={account} onChanged={refresh} />
+      <InvoiceList invoices={invoices} account={account} noted={noted} onChanged={refresh} />
     </div>
 
     {toast && <div className="animate-rise fixed inset-x-4 bottom-6 z-30 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-ink-900 px-4 py-3.5 text-sm font-semibold text-white shadow-2xl">
