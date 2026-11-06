@@ -6,9 +6,10 @@ import { getLocalAccount } from "../../lib/wallet";
 import { short } from "../../lib/format";
 import { Link } from "../../lib/router";
 import { CopyButton } from "../merchant/CopyButton";
+import { DEMO_PRICE } from "../../lib/config";
 
-const embedSnippet = (origin: string, api: string) => `<script src="${origin}/embed.js" data-api="${api}" defer></script>
-<button data-paisalink data-amount="49" data-merchant="0x…">Pay 49 USDT</button>`;
+const embedSnippet = (origin: string, api: string, price: string) => `<script src="${origin}/embed.js" data-api="${api}" defer></script>
+<button data-paisalink data-amount="${price}" data-merchant="0x…">Pay ${price} USDT</button>`;
 
 export default function DemoStore() {
   // The shop pays the merchant set in VITE_STORE_MERCHANT, else this browser's demo merchant
@@ -21,7 +22,7 @@ export default function DemoStore() {
       .catch((e) => setUnregistered(e instanceof ApiError && e.status === 404));
   }, [merchant]);
   const lines = source.trimEnd().split("\n");
-  const code = tab === "react" ? source.trimEnd() : embedSnippet(location.origin, import.meta.env.VITE_API_URL || "http://localhost:8787");
+  const code = tab === "react" ? source.trimEnd() : embedSnippet(location.origin, import.meta.env.VITE_API_URL || "http://localhost:8787", DEMO_PRICE);
 
   return <div className="min-h-dvh overflow-x-clip bg-[#fbf7f1] text-stone-900">
     <div className="bg-stone-900 py-2 text-center text-xs font-semibold text-stone-100">
@@ -46,8 +47,8 @@ export default function DemoStore() {
           <p className="text-sm font-semibold uppercase tracking-wider text-orange-800">Block-print collection</p>
           <h1 className="mt-2 font-serif text-4xl font-bold leading-tight">Dabu indigo tote bag</h1>
           <p className="mt-3 text-stone-600">Hand-stamped with carved teak blocks on organic cotton. Ships worldwide from Jaipur.</p>
-          <p className="mt-5 text-4xl font-extrabold">$49 <span className="text-base font-semibold text-stone-500">paid as 49 USDT</span></p>
-          <div className="mt-6 font-bold text-emerald-800 [&_a]:underline"><StoreCheckout merchant={merchant} /></div>
+          <p className="mt-5 text-4xl font-extrabold">${DEMO_PRICE} <span className="text-base font-semibold text-stone-500">paid as {DEMO_PRICE} USDT</span></p>
+          <div className="mt-6 font-bold text-emerald-800 [&_a]:underline"><StoreCheckout merchant={merchant} amount={DEMO_PRICE} /></div>
           {unregistered && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-900 ring-1 ring-amber-200">
             This demo shop pays your dashboard's demo merchant, which has no profile yet. <Link href="/merchant" className="underline">Create a handle on the dashboard</Link> first.</p>}
           <p className="mt-4 text-xs text-stone-500">Pays merchant <span className="font-mono">{short(merchant)}</span>{import.meta.env.VITE_STORE_MERCHANT ? "" : " (this browser's demo merchant wallet)"}.</p>

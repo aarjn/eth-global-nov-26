@@ -4,6 +4,8 @@ import { PAYMENT_ROUTER_ADDRESS } from "@paisalink/shared";
 export const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8787").replace(/\/+$/, "");
 export const EXPLORER_URL = (import.meta.env.VITE_EXPLORER_URL || "https://explorer.testnet.whitechain.io").replace(/\/+$/, "");
 /** Indicative INR rate for the "≈ ₹" helper only. Never used for amounts that are paid. */
+/** Demo-store price in USDT. Small by default because test USDT is scarce; set VITE_DEMO_PRICE=49 for the realistic demo. */
+export const DEMO_PRICE = String(import.meta.env.VITE_DEMO_PRICE || "4.90");
 export const INR_PER_USDT = Number(import.meta.env.VITE_INR_PER_USDT || 88);
 
 export const explorerTxUrl = (hash: string) => `${EXPLORER_URL}/tx/${hash}`;
