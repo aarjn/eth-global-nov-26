@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import type { PrivateKeyAccount } from "viem/accounts";
 import type { Invoice } from "@paisalink/shared";
 import { Alert, Button, Card, Spinner, StateBadge, TxLink, inputCls } from "../../components/ui";
@@ -19,20 +20,26 @@ export function InvoiceList({ invoices, account, noted, onChanged }: { invoices:
     </div>
     {invoices === null && <div className="flex items-center justify-center gap-2 py-16 text-ink-400"><Spinner /> Loading invoices…</div>}
     {invoices?.length === 0 && <div className="px-6 py-16 text-center">
+      <span aria-hidden="true" className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-saffron-50 text-3xl ring-1 ring-saffron-100">🧾</span>
       <p className="text-lg font-bold">No invoices yet</p>
       <p className="mt-1 text-sm text-ink-500">Create your first payment link. It shows up here, and turns green the moment it's paid.</p>
     </div>}
     <ul className="divide-y divide-ink-900/5">
-      {invoices?.map((inv) => <InvoiceRow key={inv.invoiceId} inv={inv} account={account} financed={inv.state === "financed" || !!noted?.has(inv.invoiceId.toLowerCase())} onChanged={onChanged} />)}
+      <AnimatePresence initial={false}>
+        {invoices?.map((inv, i) => <InvoiceRow key={inv.invoiceId} index={i} inv={inv} account={account} financed={inv.state === "financed" || !!noted?.has(inv.invoiceId.toLowerCase())} onChanged={onChanged} />)}
+      </AnimatePresence>
     </ul>
   </Card>;
 }
 
-function InvoiceRow({ inv, account, financed, onChanged }: { inv: Invoice; account: PrivateKeyAccount; financed: boolean; onChanged: () => void }) {
+function InvoiceRow({ inv, index, account, financed, onChanged }: { inv: Invoice; index: number; account: PrivateKeyAccount; financed: boolean; onChanged: () => void }) {
   const [refundOpen, setRefundOpen] = useState(false);
   const overdue = inv.state === "open" && inv.dueAt * 1000 < Date.now();
-  return <li className={`px-5 py-4 transition-colors ${inv.state === "paid" ? "bg-brand-50/40" : ""}`} data-testid="invoice-row" data-state={inv.state}>
+  return <motion.li initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+    transition={{ duration: 0.3, ease: "easeOut", delay: Math.min(index, 8) * 0.03 }}
+    className={`px-5 py-4 transition-colors duration-700 ${inv.state === "paid" ? "bg-brand-50/60" : ""}`} data-testid="invoice-row" data-state={inv.state}>
     <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
+      <RowIcon state={inv.state} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="tabular text-xl font-extrabold tracking-tight">{money(inv.amountUsdt)} <span className="text-sm font-bold text-ink-400">USDT</span></span>
@@ -63,7 +70,22 @@ function InvoiceRow({ inv, account, financed, onChanged }: { inv: Invoice; accou
         className="text-sm font-semibold text-ink-500 hover:text-ink-800 hover:underline">Arkiv record</a>}
     </div>}
     {refundOpen && <RefundPanel inv={inv} account={account} onClose={() => setRefundOpen(false)} onDone={onChanged} />}
-  </li>;
+  </motion.li>;
+}
+
+/** Small round status icon at the start of each row: a hand-drawn feel for paid / waiting / refunded. */
+function RowIcon({ state }: { state: Invoice["state"] }) {
+  const base = "mt-0.5 hidden size-10 shrink-0 items-center justify-center rounded-full sm:flex";
+  if (state === "paid" || state === "settled") return <motion.span key="paid" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+    transition={{ type: "spring", stiffness: 400, damping: 18 }} className={`${base} bg-brand-600 text-white shadow-brand`} aria-hidden="true">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  </motion.span>;
+  if (state === "refunded") return <span className={`${base} bg-sky-50 text-sky-700 ring-1 ring-sky-200`} aria-hidden="true">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>;
+  if (state === "financed") return <span className={`${base} bg-violet-50 text-violet-700 ring-1 ring-violet-200`} aria-hidden="true">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg></span>;
+  return <span className={`${base} bg-saffron-50 text-saffron-500 ring-1 ring-saffron-100`} aria-hidden="true">
+    <svg className="size-5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2.2" /><path d="M12 8v4l2.5 2" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg></span>;
 }
 
 function RefundPanel({ inv, account, onClose, onDone }: { inv: Invoice; account: PrivateKeyAccount; onClose: () => void; onDone: () => void }) {

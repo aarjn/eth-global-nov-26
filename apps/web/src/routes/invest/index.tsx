@@ -16,6 +16,8 @@ import { formatEther } from "viem";
 import { getNoteAddress, isAllowed, wbtBalance, type NoteRow, type NotesList } from "./lib";
 import { NoteCard } from "./NoteCard";
 import { SellInvoice } from "./SellInvoice";
+import { Avatar } from "../../components/magicui/avatar";
+import { BlurFade } from "../../components/magicui/blur-fade";
 
 interface DeskResp { allowed: boolean; allowlistTx: Hex | null; gasTx: Hex | null; label: string }
 
@@ -109,6 +111,8 @@ export default function InvestPage() {
     <Card className="mt-6 p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
+          <Avatar name="Investor" tone="violet" size="sm" />
+          <span className="mr-1 text-sm font-bold text-ink-900">Hi, investor 👋</span>
           <DemoWalletTag address={investor.address} role="investor" />
           {me.allowed === true && <Badge tone="brand">On the investor allowlist</Badge>}
           {me.allowed === false && <Badge tone="rose">Not allowlisted</Badge>}
@@ -131,10 +135,10 @@ export default function InvestPage() {
       <span className="text-xs text-ink-400">Read from Arkiv · live state from Whitechain</span>
     </div>
     {listErr && list === null && <div className="mt-3"><Alert tone="amber">{listErr}</Alert></div>}
-    {list && list.length === 0 && <Card className="mt-3 p-6 text-center text-ink-500">No invoices for sale yet. A merchant can sell one from the dashboard ("Sell this invoice").</Card>}
+    {list && list.length === 0 && <Card className="mt-3 p-6 text-center text-ink-500"><span aria-hidden="true" className="mb-2 block text-3xl">🌱</span>No invoices for sale yet. A merchant can sell one from the dashboard ("Sell this invoice").</Card>}
     <div className="mt-3 space-y-4">
-      {note && ordered.map((n) => <NoteCard key={n.noteId} row={n} note={note} investor={investor} nowSec={nowSec}
-        investorAllowed={me.allowed} investorWbt={me.wbt} onChanged={() => { void refresh(); void refreshMe(); }} />)}
+      {note && ordered.map((n, i) => <BlurFade key={n.noteId} delay={Math.min(i, 6) * 0.04}><NoteCard row={n} note={note} investor={investor} nowSec={nowSec}
+        investorAllowed={me.allowed} investorWbt={me.wbt} onChanged={() => { void refresh(); void refreshMe(); }} /></BlurFade>)}
     </div>
 
     <Card className="mt-8 p-5 sm:p-6">

@@ -49,7 +49,7 @@ export function CreateInvoice({ wallet, disabled, onCreated }: { wallet: Address
         <CopyButton text={link} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <a href={link} target="_blank" rel="noreferrer" className="rounded-2xl bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-brand hover:bg-brand-700">Open link</a>
+        <a href={link} target="_blank" rel="noreferrer" className="rounded-2xl bg-gradient-to-b from-brand-500 to-brand-700 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-brand hover:bg-brand-700">Open link</a>
         <Button variant="secondary" onClick={() => setCreated(null)}>New invoice</Button>
       </div>
     </Card>;
@@ -73,7 +73,7 @@ export function CreateInvoice({ wallet, disabled, onCreated }: { wallet: Address
         <input type="date" className={inputCls} value={due} min={isoDate(new Date())} onChange={(e) => setDue(e.target.value)} />
       </Field>
       {err && <Alert>{err}</Alert>}
-      <Button type="submit" className="w-full py-3.5 text-base" loading={busy} disabled={disabled || !validAmount || memoBytes > 128 || !due}>
+      <Button shimmer type="submit" className="w-full py-3.5 text-base" loading={busy} disabled={disabled || !validAmount || memoBytes > 128 || !due}>
         {busy ? "Creating link…" : "Create payment link"}
       </Button>
       {disabled && <p className="text-center text-xs text-ink-500">Set up your handle first.</p>}

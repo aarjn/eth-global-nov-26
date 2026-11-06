@@ -82,7 +82,7 @@ export function NoteCard({ row, note, investor, nowSec, investorAllowed, investo
   const escrowShort = c ? !c.escrowFull : true;
   const hasGas = investorWbt !== null && investorWbt > 0n;
 
-  return <Card className="p-5 sm:p-6">
+  return <Card className="p-5 transition-shadow duration-300 hover:shadow-lg sm:p-6">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <div className="flex flex-wrap items-center gap-2">

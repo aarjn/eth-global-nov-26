@@ -10,6 +10,8 @@ import { Link } from "../../lib/router";
 import { CreateInvoice } from "./CreateInvoice";
 import { claimAutoPublish, publishInvoicePdf } from "../../lib/swarm";
 import { InvoiceList } from "./InvoiceList";
+import { NumberTicker } from "../../components/magicui/number-ticker";
+import { Avatar, firstName } from "../../components/magicui/avatar";
 
 export default function MerchantPage() {
   const account = useMemo(() => getLocalAccount("merchant"), []);
@@ -32,7 +34,7 @@ export default function MerchantPage() {
       for (const inv of invoices) {
         const was = before.get(inv.invoiceId);
         if (was === "open" && inv.state === "paid") {
-          setToast(`Payment received: ${money(inv.amountUsdt)} USDT${inv.memo ? ` · ${inv.memo}` : ""}`);
+          setToast(`Money's in! 🎉 Payment received: ${money(inv.amountUsdt)} USDT${inv.memo ? ` · ${inv.memo}` : ""}`);
           setTimeout(() => setToast(null), 6000);
           // Publish the receipt PDF to Swarm once, in the background (errors such as "not configured" are ignored here;
           // the row's "Publish PDF to Swarm" button shows them if the merchant retries by hand).
@@ -62,14 +64,18 @@ export default function MerchantPage() {
 
   return <Shell>
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
+      <div className="flex items-start gap-4">
+        <Avatar name={merchant?.handle ?? "P"} size="lg" className="mt-1 hidden sm:inline-flex" />
+        <div className="min-w-0">
         <p className="text-sm font-semibold text-ink-500">Merchant dashboard</p>
         <h1 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{merchant?.handle ? `@${merchant.handle}` : "Your business"}</h1>
+        {merchant?.handle && <p className="mt-1 text-base text-ink-600">Hi {firstName(merchant.handle) ?? "there"} 👋 {stats.collected > 0 ? "Here's the money you've collected so far." : "Send your first payment link and get paid in minutes."}</p>}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <DemoWalletTag address={wallet} role="merchant" />
           <VerificationBadge merchant={merchant} wallet={wallet} />
           {merchant && (merchant as Merchant & { arkivUrl?: string }).arkivUrl && <a href={(merchant as Merchant & { arkivUrl?: string }).arkivUrl} target="_blank" rel="noreferrer"
             className="text-xs font-semibold text-ink-500 underline hover:text-ink-800">Profile record on Arkiv</a>}
+        </div>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -93,7 +99,7 @@ export default function MerchantPage() {
     </Alert></div>}
 
     <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4">
-      <Stat label="Collected" value={stats.collected} />
+      <Stat label="Collected" value={stats.collected} highlight />
       <Stat label="Awaiting" value={stats.awaiting} />
       <Stat label="Invoices" value={stats.count} plain />
     </div>
@@ -106,16 +112,26 @@ export default function MerchantPage() {
     </div>
 
     {toast && <div className="animate-rise fixed inset-x-4 bottom-6 z-30 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-ink-900 px-4 py-3.5 text-sm font-semibold text-white shadow-2xl">
-      <span className="flex size-7 items-center justify-center rounded-full bg-brand-500"><svg className="size-4" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+      <span className="animate-pop flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-500"><svg className="size-4" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
       {toast}
     </div>}
   </Shell>;
 }
 
-function Stat({ label, value, plain }: { label: string; value: number; plain?: boolean }) {
+const fmtUsdt = (n: number) => money(Math.round(n * 100) / 100);
+const fmtCount = (n: number) => String(Math.round(n));
+
+function Stat({ label, value, plain, highlight }: { label: string; value: number; plain?: boolean; highlight?: boolean }) {
+  if (highlight) return <div className="relative min-w-0 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 p-3.5 text-white shadow-brand sm:p-5">
+    <span aria-hidden="true" className="absolute -right-6 -top-6 size-24 rounded-full bg-white/10" />
+    <span aria-hidden="true" className="absolute -bottom-10 right-6 hidden size-20 rounded-full bg-brand-300/20 sm:block" />
+    <p className="relative text-[11px] font-semibold uppercase tracking-wider text-brand-100 sm:text-xs">{label}</p>
+    <p className="tabular relative mt-1 text-xl font-extrabold tracking-tight sm:text-3xl"><NumberTicker value={value} format={fmtUsdt} />{!plain && <span className="block text-xs font-bold text-brand-100 sm:ml-1 sm:inline sm:text-sm">USDT</span>}</p>
+    {!plain && <p className="tabular relative hidden text-xs text-brand-100 sm:block">{inr(value)}</p>}
+  </div>;
   return <Card className="min-w-0 p-3.5 sm:p-5">
     <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500 sm:text-xs">{label}</p>
-    <p className="tabular mt-1 text-xl font-extrabold tracking-tight sm:text-3xl">{money(value)}{!plain && <span className="block text-xs font-bold text-ink-400 sm:ml-1 sm:inline sm:text-sm">USDT</span>}</p>
+    <p className="tabular mt-1 text-xl font-extrabold tracking-tight sm:text-3xl"><NumberTicker value={value} format={plain ? fmtCount : fmtUsdt} />{!plain && <span className="block text-xs font-bold text-ink-400 sm:ml-1 sm:inline sm:text-sm">USDT</span>}</p>
     {!plain && <p className="tabular hidden text-xs text-ink-400 sm:block">{inr(value)}</p>}
   </Card>;
 }

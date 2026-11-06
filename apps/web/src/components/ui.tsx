@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { InvoiceState } from "@paisalink/shared";
 import { explorerTxUrl } from "../lib/config";
 import { short } from "../lib/format";
+import { ShimmerButton } from "./magicui/shimmer-button";
 
 export function cx(...c: (string | false | null | undefined)[]) { return c.filter(Boolean).join(" "); }
 
@@ -10,17 +11,20 @@ export function Card({ children, className }: { children: ReactNode; className?:
 }
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
-export function Button({ variant = "primary", loading, children, className, disabled, ...rest }:
-  ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; loading?: boolean }) {
+export function Button({ variant = "primary", loading, shimmer, children, className, disabled, ...rest }:
+  ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; loading?: boolean; shimmer?: boolean }) {
+  // Hero actions (Pay, Create payment link) get the Magic UI shimmer; same props, label and test ids.
+  if (shimmer && variant === "primary") return <ShimmerButton {...rest} disabled={disabled || loading} aria-busy={loading || undefined}
+    className={cx("rounded-2xl px-4 py-2.5 text-sm", className)}>{loading && <Spinner />}{children}</ShimmerButton>;
   const v: Record<Variant, string> = {
-    primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-brand active:bg-brand-800",
+    primary: "bg-gradient-to-b from-brand-500 to-brand-700 text-white hover:from-brand-600 hover:to-brand-800 shadow-brand active:translate-y-px",
     secondary: "bg-white text-ink-900 ring-1 ring-ink-900/10 hover:bg-ink-50",
     ghost: "text-ink-700 hover:bg-ink-900/5",
     danger: "bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50",
   };
   return (
     <button {...rest} disabled={disabled || loading} aria-busy={loading || undefined}
-      className={cx("inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition",
+      className={cx("inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition duration-200",
         "disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500", v[variant], className)}>
       {loading && <Spinner />}
       {children}
@@ -45,7 +49,7 @@ const stateStyle: Record<InvoiceState, { label: string; cls: string; dot: string
 
 export function StateBadge({ state }: { state: InvoiceState }) {
   const s = stateStyle[state] ?? stateStyle.open;
-  return <span className={cx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1", s.cls)}>
+  return <span className={cx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ring-1", s.cls)}>
     <span className={cx("size-1.5 rounded-full", s.dot, state === "open" && "animate-pulse")} />{s.label}
   </span>;
 }
@@ -89,7 +93,7 @@ export function Alert({ tone = "rose", children }: { tone?: "rose" | "amber" | "
 
 export function Logo({ className }: { className?: string }) {
   return <span className={cx("inline-flex items-center gap-2 font-extrabold tracking-tight text-ink-900", className)}>
-    <svg className="size-7" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0b7a5c" /><path d="M10 9h7.5a5 5 0 010 10H14v4h-4V9zm4 3.5v3h3.3a1.5 1.5 0 000-3H14z" fill="#fff" /></svg>
+    <svg className="size-7" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="pl-logo" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#12ae86" /><stop offset="1" stopColor="#0a6a50" /></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#pl-logo)" /><circle cx="25.5" cy="6.5" r="3" fill="#f59e0b" /><path d="M10 9h7.5a5 5 0 010 10H14v4h-4V9zm4 3.5v3h3.3a1.5 1.5 0 000-3H14z" fill="#fff" /></svg>
     <span>Paisa<span className="text-brand-600">Link</span></span>
   </span>;
 }

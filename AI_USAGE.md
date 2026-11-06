@@ -139,10 +139,14 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | `Dockerfile`, `.dockerignore`, `scripts/serve.ts`, `scripts/serve-lib.ts`, `scripts/serve.test.ts`, `scripts/deploy-host.sh`, `docs/hosting-paisalink.md` | Opus 5.5 (H1) | Single-container hosting (Dokku + Tailscale Funnel) |
 | Live-link wording in `README.md`, `docs/submission.md`, `arkiv/reach.md` | Sonnet 5.5 (S7) | Replaced the no-public-URL text with the live link |
 | `docs/owner-todo.md`, the live evidence and amounts in `README.md`, `docs/submission.md`, `docs/demo-script.md` | Sonnet (S5) | Filled from `contracts/deployments/1874.json`, `docs/live-run.md` and on-chain receipts |
+| `apps/web/src/components/magicui/*` (new), `apps/web/public/fonts/InterVariable.woff2`, `apps/web/e2e/ui-shots.ts`, UI polish in `apps/web/src/index.css`, `main.tsx`, `index.html`, `components/ui.tsx`, `components/Shell.tsx`, `routes/Home.tsx`, `routes/merchant/{index,InvoiceList,CreateInvoice}.tsx`, `routes/pay/index.tsx`, `routes/receipt/index.tsx`, `routes/invest/{index,NoteCard}.tsx`, README UI credits | Opus 5.5 (U1) | Warmer UI: Magic UI components (number ticker, shimmer button, blur fade, animated beam, avatars), Motion, confetti on "Paid", self-hosted Inter; no functional changes |
 
 ## Code Garage items used
 
-`TODO(coordinator): list any Code Garage items reused (name and id). None were recorded at the time of writing.`
+- Magic UI, garage id `frontend.components.animated-component-kits` (trust: reviewed, MIT): component source copied and adapted by U1 into `apps/web/src/components/magicui/`.
+- Inter variable font file taken from the garage mirror of `openapi-ts/openapi-typescript` (`docs/public/assets/InterVariable.woff2`; the font itself is SIL OFL 1.1).
+
+`TODO(coordinator): add any other Code Garage items reused by other agents.`
 
 ## What the human contributed
 

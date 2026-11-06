@@ -1,7 +1,16 @@
 @import "tailwindcss";
 
+/* Inter (variable, SIL Open Font License 1.1), self-hosted: no network font loads. */
+@font-face {
+  font-family: "InterVariable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/InterVariable.woff2") format("woff2");
+}
+
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-sans: "InterVariable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   --color-brand-50: #ecfdf6;
   --color-brand-100: #d1fae9;
@@ -13,26 +22,66 @@
   --color-brand-700: #0a6a50;
   --color-brand-800: #0b5541;
   --color-brand-900: #0a4636;
-  --color-ink-50: #f6f7f9;
-  --color-ink-100: #eceef2;
-  --color-ink-200: #d5d9e1;
-  --color-ink-300: #b1b8c6;
-  --color-ink-400: #8a93a6;
-  --color-ink-500: #677086;
-  --color-ink-600: #4f576b;
-  --color-ink-700: #3c4356;
-  --color-ink-800: #252b3b;
-  --color-ink-900: #111627;
+  /* ink: slightly warm greys so text sits well on the off-white canvas */
+  --color-ink-50: #f8f6f2;
+  --color-ink-100: #efece6;
+  --color-ink-200: #dcd8d0;
+  --color-ink-300: #bdb7ad;
+  --color-ink-400: #958e83;
+  --color-ink-500: #6f695f;
+  --color-ink-600: #554f47;
+  --color-ink-700: #3f3a33;
+  --color-ink-800: #29251f;
+  --color-ink-900: #1a1713;
+  --color-saffron-50: #fff8eb;
+  --color-saffron-100: #feedc7;
+  --color-saffron-400: #fbbf24;
   --color-saffron-500: #f59e0b;
-  --color-canvas: #f4f6f5;
-  --shadow-card: 0 1px 2px rgba(17, 22, 39, 0.04), 0 8px 24px -8px rgba(17, 22, 39, 0.08);
-  --shadow-brand: 0 10px 24px -10px rgba(11, 122, 92, 0.55);
+  --color-canvas: #faf7f2;
+  --shadow-card: 0 1px 2px rgba(60, 40, 20, 0.04), 0 10px 30px -12px rgba(60, 40, 20, 0.12);
+  --shadow-brand: 0 12px 28px -12px rgba(11, 122, 92, 0.6);
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+
+  @keyframes shimmer-slide {
+    to { transform: translate(calc(100cqw - 100%), 0); }
+  }
+  @keyframes spin-around {
+    0% { transform: translateZ(0) rotate(0); }
+    15%, 35% { transform: translateZ(0) rotate(90deg); }
+    65%, 85% { transform: translateZ(0) rotate(270deg); }
+    100% { transform: translateZ(0) rotate(360deg); }
+  }
 }
 
 html { -webkit-tap-highlight-color: transparent; }
-body { @apply bg-canvas text-ink-900 antialiased; font-feature-settings: "cv11", "ss01"; }
+body {
+  @apply bg-canvas text-ink-900 antialiased;
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+h1, h2, h3 { letter-spacing: -0.022em; text-wrap: balance; }
 .tabular { font-variant-numeric: tabular-nums; }
 @keyframes pop { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }
 .animate-pop { animation: pop .45s cubic-bezier(.2,.9,.3,1.2) both; }
 @keyframes rise { from { transform: translateY(8px); opacity: 0 } to { transform: none; opacity: 1 } }
 .animate-rise { animation: rise .3s ease-out both; }
+/* soft glow ring behind the "Paid" check */
+@keyframes halo { 0% { transform: scale(.8); opacity: .55 } 100% { transform: scale(1.9); opacity: 0 } }
+.animate-halo { animation: halo 1.6s ease-out 2 both; }
+
+/* Warm paper texture: two very soft colour washes behind every page. */
+.bg-warm {
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(60rem 30rem at 10% -10%, rgba(18, 174, 134, 0.10), transparent 60%),
+    radial-gradient(50rem 28rem at 100% 0%, rgba(245, 158, 11, 0.10), transparent 60%);
+  background-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

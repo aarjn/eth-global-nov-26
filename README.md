@@ -401,3 +401,10 @@ The code was written by Claude agents. Opus wrote the code. Sonnet wrote tests a
 ## Licence
 
 MIT. See [`LICENSE`](LICENSE). Copyright (c) 2026 aarjn.
+
+### Third-party UI credits
+
+- [Magic UI](https://magicui.design) (MIT, (c) Magic UI): adapted copies of `number-ticker`, `shimmer-button`, `blur-fade`, `animated-beam`, and ideas from `confetti` and `avatar-circles`, in `apps/web/src/components/magicui/` (its MIT notice is in `LICENSE.md` there).
+- [Motion](https://motion.dev) (`motion` 12.43.0, MIT): animations in the web app.
+- [canvas-confetti](https://github.com/catdad/canvas-confetti) (1.9.4, ISC): the "Paid" celebration.
+- [Inter](https://rsms.me/inter/) variable font (SIL Open Font License 1.1), self-hosted in `apps/web/public/fonts/`.

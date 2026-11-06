@@ -9,6 +9,9 @@ import { explorerTxUrl, getRouterAddress, receiptLink } from "../../lib/config";
 import { dateStr, inr, money } from "../../lib/format";
 import { getLocalAccount } from "../../lib/wallet";
 import { selfPay, type SelfPayStep } from "../../lib/selfPay";
+import { motion } from "motion/react";
+import { Avatar } from "../../components/magicui/avatar";
+import { celebrate } from "../../components/magicui/confetti";
 
 type Phase = "idle" | "funding" | "approving" | "sending" | "selfpay" | "paid";
 type Payer = { kind: "demo"; address: Address } | { kind: "injected"; address: Address };
@@ -166,7 +169,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
   const offerSelfPay = invoice?.gaslessAvailable === false || errCode === "MERCHANT_NOT_VERIFIED";
   const selfLabel = { connecting: "Connecting your wallet…", approving: "Approve USDT in your wallet…", paying: "Confirm the payment in your wallet…", confirming: "Confirming…" };
 
-  return <div className={cx("flex min-h-dvh flex-col overflow-x-clip bg-gradient-to-b from-brand-50 via-canvas to-canvas", embed && "min-h-[100dvh]")}>
+  return <div className={cx("flex min-h-dvh flex-col overflow-x-clip bg-warm", embed && "min-h-[100dvh]")}>
     {!embed && <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 pt-5"><Logo className="text-lg" /><span className="flex items-center gap-1 text-xs font-semibold text-ink-500">
       <svg className="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" strokeWidth="2" /></svg>Secure checkout</span></header>}
 
@@ -183,13 +186,13 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
       {invoice && phase !== "paid" && <>
         <section className="animate-rise rounded-[2rem] bg-white p-6 shadow-card ring-1 ring-ink-900/5">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-brand-600 text-lg font-extrabold uppercase text-white">{(handleName ?? "P").slice(0, 1)}</span>
+            <Avatar name={handleName ?? "P"} />
             <div className="min-w-0">
               <p className="truncate font-bold text-ink-900">{handleName ? `@${handleName}` : "Payment request"}</p>
-              <p className="text-xs text-ink-500">{merchant?.verified ? "Verified business" : "requests a payment"}</p>
+              <p className="flex items-center gap-1 text-xs text-ink-500">{merchant?.verified && <svg className="size-3.5 text-brand-600" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" fill="currentColor" opacity=".18" /><path d="M8.5 12l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>}{merchant?.verified ? "Verified business" : "requests a payment"}</p>
             </div>
           </div>
-          <p className="mt-6 text-sm font-semibold text-ink-500">Amount due</p>
+          <p className="mt-6 text-sm font-semibold text-ink-500">{payable ? "Amount due" : "Amount"}</p>
           <p className="tabular mt-1 text-6xl font-extrabold leading-none tracking-tight text-ink-900" data-testid="amount">{money(invoice.amountUsdt)}<span className="ml-2 text-2xl font-bold text-ink-400">USDT</span></p>
           <p className="tabular mt-2 text-sm text-ink-500">{inr(invoice.amountUsdt)} · 1 USDT = 1 US dollar</p>
           {invoice.memo && <p className="mt-5 rounded-2xl bg-ink-50 px-4 py-3 text-sm text-ink-700">{invoice.memo}</p>}
@@ -202,9 +205,11 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
           You can pay from your own wallet below and pay the small fee yourself.
         </Alert></div>}
 
-        {!payable && <div className="mt-5"><Alert tone="brand">
-          This invoice is already {invoice.state === "paid" ? "paid" : invoice.state}. <a className="font-semibold underline" href={`/r/${invoiceId}`}>View receipt</a>
-        </Alert></div>}
+        {!payable && <div className="animate-rise mt-5 flex items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3.5 text-sm text-brand-900 ring-1 ring-brand-200" role="status">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-brand" aria-hidden="true">
+            <svg className="size-5" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+          <span>This invoice is already {invoice.state === "paid" ? "paid" : invoice.state}. All sorted! <a className="font-semibold underline" href={`/r/${invoiceId}`}>View receipt</a></span>
+        </div>}
 
         {payable && offline && <div className="mt-auto pt-6"><Alert tone="amber">
           Payments are switched off for a moment while PaisaLink finishes setting up. Please keep this link and try again shortly.
@@ -217,7 +222,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
           {balance !== null && !enough && phase !== "funding" ? <>
             <Button className="w-full py-4 text-lg" onClick={getTestUsdt}>Get test USDT</Button>
             <p className="mt-2 text-center text-xs text-ink-500">Your demo wallet is empty. This sends free <b>testnet</b> USDT to it (demo only).</p>
-          </> : <Button className="w-full py-4 text-lg" onClick={pay} loading={busy} disabled={balance === null || busy || router === undefined} data-testid="pay-button">
+          </> : <Button shimmer className="w-full py-4 text-lg" onClick={pay} loading={busy} disabled={balance === null || busy || router === undefined} data-testid="pay-button">
             {phase === "funding" ? "Adding test USDT…" : phase === "approving" ? "Approving…" : phase === "sending" ? "Sending payment…" : `Pay ${money(invoice.amountUsdt)} USDT`}
           </Button>}
 
@@ -243,16 +248,25 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
 
 function Success({ invoice, handle, result, embed, selfPaid }: { invoice: Invoice; handle: string; result: RelayResponse; embed: boolean; selfPaid: boolean }) {
   const explorer = result.explorerUrl || explorerTxUrl(result.txHash);
+  useEffect(() => { celebrate(); }, []);
   return <div className="flex flex-1 flex-col items-center pt-8 text-center" data-testid="paid">
-    <span className="animate-pop flex size-24 items-center justify-center rounded-full bg-brand-600 text-white shadow-brand">
-      <svg className="size-12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <span className="relative flex size-24 items-center justify-center">
+      <span aria-hidden="true" className="animate-halo absolute inset-0 rounded-full bg-brand-400" />
+      <motion.span initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 320, damping: 16 }}
+        className="relative flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-brand">
+        <svg className="size-12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <motion.path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.15, duration: 0.45, ease: "easeOut" }} />
+        </svg>
+      </motion.span>
     </span>
-    <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Paid</h1>
+    <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Paid. Thank you! 🙏</h1>
     <p className="tabular mt-2 text-lg text-ink-700"><b>{money(invoice.amountUsdt)} USDT</b> to {handle}</p>
+    <p className="mt-1 text-sm font-medium text-brand-700">Money's on its way. {handle === "the merchant" ? "They" : handle} will see it land in seconds.</p>
     {invoice.memo && <p className="mt-1 text-sm text-ink-500">{invoice.memo}</p>}
     <div className="mt-8 w-full space-y-3">
       <a href={`/r/${invoice.invoiceId}`} target={embed ? "_blank" : undefined} rel="noreferrer"
-        className="block w-full rounded-2xl bg-brand-600 py-4 text-lg font-semibold text-white shadow-brand hover:bg-brand-700">View receipt</a>
+        className="block w-full rounded-2xl bg-gradient-to-b from-brand-500 to-brand-700 py-4 text-lg font-semibold text-white shadow-brand hover:from-brand-600 hover:to-brand-800">View receipt</a>
       <a href={explorer} target="_blank" rel="noreferrer" className="block w-full rounded-2xl bg-white py-3.5 font-semibold text-ink-800 ring-1 ring-ink-900/10 hover:bg-ink-50">Public payment record</a>
       {embed && <button type="button" onClick={() => post({ type: "close" })} className="w-full py-2 text-sm font-semibold text-ink-500">Done</button>}
     </div>

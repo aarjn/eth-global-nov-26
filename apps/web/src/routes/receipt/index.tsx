@@ -35,7 +35,7 @@ export default function ReceiptPage({ params }: { params: Record<string, string>
     return () => clearInterval(t);
   }, [data, load]);
 
-  return <div className="min-h-dvh overflow-x-clip bg-canvas print:bg-white">
+  return <div className="min-h-dvh overflow-x-clip bg-warm print:bg-white">
     <div className="mx-auto max-w-lg px-5 py-6 sm:py-10">
       <div className="flex items-center justify-between print:hidden"><a href="/"><Logo className="text-lg" /></a>
         {data && <Button variant="secondary" onClick={() => window.print()}>Print / Save PDF</Button>}</div>
@@ -56,10 +56,14 @@ function ReceiptCard({ r }: { r: Receipt }) {
   const paid = inv.state !== "open";
   const payTx = p?.txHash ?? inv.payTx;
   return <article className="animate-rise mt-6 overflow-hidden rounded-[2rem] bg-white shadow-card ring-1 ring-ink-900/5 print:shadow-none" data-testid="receipt">
-    <div className={`px-6 pb-6 pt-7 ${paid ? "bg-brand-600 text-white" : "bg-amber-50 text-amber-950"}`}>
-      <p className="text-sm font-semibold opacity-80">{paid ? "Payment receipt" : "Invoice (awaiting payment)"}</p>
-      <p className="tabular mt-2 text-5xl font-extrabold tracking-tight">{money(inv.amountUsdt)} <span className="text-xl opacity-70">USDT</span></p>
-      <p className="tabular mt-1 text-sm opacity-80">{inr(inv.amountUsdt)} indicative</p>
+    <div className={`relative overflow-hidden px-6 pb-6 pt-7 ${paid ? "bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 text-white" : "bg-amber-50 text-amber-950"}`}>
+      {paid && <><span aria-hidden="true" className="absolute -right-8 -top-8 size-32 rounded-full bg-white/10" />
+        <span aria-hidden="true" className="absolute -bottom-12 right-10 size-24 rounded-full bg-brand-300/20" />
+        <span aria-hidden="true" className="animate-pop absolute right-6 top-6 flex size-11 items-center justify-center rounded-full bg-white text-brand-600 shadow-lg">
+          <svg className="size-6" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></span></>}
+      <p className="relative text-sm font-semibold opacity-80">{paid ? "Payment receipt" : "Invoice (awaiting payment)"}</p>
+      <p className="tabular relative mt-2 text-5xl font-extrabold tracking-tight">{money(inv.amountUsdt)} <span className="text-xl opacity-70">USDT</span></p>
+      <p className="tabular relative mt-1 text-sm opacity-80">{inr(inv.amountUsdt)} indicative</p>
     </div>
     <dl className="divide-y divide-ink-900/5 px-6 py-2">
       <Row k="Status"><StateBadge state={inv.state} /></Row>
