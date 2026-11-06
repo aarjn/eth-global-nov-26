@@ -1,11 +1,379 @@
-# eth-global-nov-26
+# PaisaLink
 
-Our ETHGlobal hackathon project (November 2026).
+**Get paid in USDT on Whitechain with a link or a 20-line widget. Your client never needs gas, a seed phrase or a chain name.**
 
-## Status
+Built solo by [@aarjn](https://github.com/aarjn) for ETHGlobal Mumbai 2026 (Classic track). Sponsors: Whitechain, Arkiv, World. Everything runs on testnets. No real money is involved.
 
-The repo is set up. We'll add the project description, setup steps and demo here as the build moves along.
+- Demo video (3 min): `TODO(live): video URL`
+- Live app: `TODO(live): public web URL` (API: `TODO(live): public API URL`)
+- Submission text: [`docs/submission.md`](docs/submission.md)
+- Demo narration and shot list: [`docs/demo-script.md`](docs/demo-script.md)
 
-## Team
+## Contents
 
-- [@aarjn](https://github.com/aarjn)
+1. [The problem](#the-problem)
+2. [What PaisaLink does](#what-paisalink-does)
+3. [Screenshots](#screenshots)
+4. [Architecture](#architecture)
+5. [How each sponsor is used](#how-each-sponsor-is-used)
+6. [What breaks without each sponsor](#what-breaks-without-each-sponsor)
+7. [Why onchain settlement on Whitechain](#why-onchain-settlement-on-whitechain)
+8. [Gas and drain protection](#gas-and-drain-protection)
+9. [Live vs demo shortcuts](#live-vs-demo-shortcuts)
+10. [Setup from a clean machine](#setup-from-a-clean-machine)
+11. [Contracts and transaction table](#contracts-and-transaction-table)
+12. [Arkiv: writer wallet and a runnable query](#arkiv-writer-wallet-and-a-runnable-query)
+13. [Tests](#tests)
+14. [Current limitations](#current-limitations)
+15. [AI usage](#ai-usage)
+16. [Video chapters](#video-chapters)
+17. [Licence](#licence)
+
+## The problem
+
+An Indian freelancer or exporter who bills a client abroad loses roughly **3 to 6 percent** of each invoice to bank and card fees and the currency spread. Then they wait days for the money. (This is the builder's working figure, not a measured one. `TODO(owner): add a source or soften the number before submitting.`)
+
+Paying in a stablecoin fixes the cost and the wait. It creates new problems. The client must hold gas tokens, pick a network and sign a transaction they don't understand. The freelancer has no refund button, no invoice list, and nothing to give their accountant.
+
+## What PaisaLink does
+
+1. **Invoice.** A merchant creates an invoice (amount, due date, note). It becomes an Arkiv entity and a payment link, `/pay/<invoiceId>`.
+2. **Gasless pay.** The client opens the link on a phone and taps Pay. They sign a typed message for the official Whitechain testnet USDT (EIP-3009 `receiveWithAuthorization`). Our relayer sends the transaction and pays the gas. The client never holds WBT.
+3. **Live dashboard.** The merchant dashboard reads Arkiv and updates by itself. It shows the payment, the explorer link, a one-click refund, a CSV export for the accountant and a PDF receipt on Swarm.
+4. **Sell the invoice.** An exporter with a 30-day invoice tokenises it as an `InvoiceNote`. An allowlisted investor funds it at a discount in USDT. At maturity the note settles in USDT. Transfers after maturity revert. The rules are in the contract, not the UI.
+5. **Who gets gas.** A merchant must pass one World ID Proof of Human check to use the gas-sponsored path. If the check is cancelled or fails, the gasless path stays locked. The client can still pay with their own wallet through `pay()` and cover the gas themselves.
+6. **Drop-in widget.** A separate shop adds the `<PaisaLink/>` button in about 20 lines ([`StoreCheckout.tsx`](apps/web/src/routes/demo-store/StoreCheckout.tsx) is 19 lines).
+
+## Screenshots
+
+Saved in `docs/screenshots/` (`TODO(live): add images and uncomment`).
+
+| # | Screen | File |
+|---|---|---|
+| 1 | Merchant dashboard with a paid invoice and live update | `TODO(live): docs/screenshots/01-dashboard.png` |
+| 2 | Payer's phone: `/pay/<id>`, "Paid" state, no chain name | `TODO(live): docs/screenshots/02-pay-phone.png` |
+| 3 | Explorer page of the gasless USDT payment tx | `TODO(live): docs/screenshots/03-explorer-pay.png` |
+| 4 | Refund dialog and refund tx | `TODO(live): docs/screenshots/04-refund.png` |
+| 5 | CSV opened in a spreadsheet | `TODO(live): docs/screenshots/05-csv.png` |
+| 6 | Public receipt `/r/<id>` with "Open PDF on Swarm" | `TODO(live): docs/screenshots/06-receipt.png` |
+| 7 | The invoice entity on the Rabdi explorer | `TODO(live): docs/screenshots/07-arkiv-entity.png` |
+| 8 | `/invest`: note funded, then "transfer after maturity" revert | `TODO(live): docs/screenshots/08-invest.png` |
+| 9 | `/onboard`: World ID success badge, and the locked banner after cancel | `TODO(live): docs/screenshots/09-world.png` |
+| 10 | `/demo-store` next to its 19-line source | `TODO(live): docs/screenshots/10-demo-store.png` |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    M[Merchant dashboard<br/>/merchant]
+    P[Payer phone<br/>/pay/:id]
+    I[Investor<br/>/invest]
+    O[Onboarding<br/>/onboard + IDKit]
+    W[Widget<br/>PaisaLink button]
+  end
+
+  subgraph Server["apps/api (Hono on bun)"]
+    R[Relayer<br/>simulate, budget, limits]
+    V[World verify<br/>+ nullifier store]
+    PDF[PDF + Swarm upload]
+    S[Arkiv store<br/>single writer queue]
+  end
+
+  subgraph WC["Whitechain testnet (1874)"]
+    PR[PaymentRouter]
+    IN[InvoiceNote]
+    U[(Official USDT<br/>EIP-3009)]
+  end
+
+  AR[(Arkiv Rabdi<br/>7794095)]
+  SW[(Swarm<br/>public gateway)]
+  WD[World Developer Portal<br/>verify API]
+
+  P -- signs typed data, no gas --> R
+  W --> R
+  R -- payWithAuthorization --> PR
+  PR -- receiveWithAuthorization --> U
+  M -- refund signature --> R
+  R -- refundWithSig --> PR
+  I -- fund / transfer / settle --> IN
+  IN <--> PR
+  IN -- pulls and pays USDT --> U
+  O -- IDKit proof --> V
+  V -- verify --> WD
+  V -- verified = 1 --> S
+  R --> S
+  PDF --> SW
+  PDF -- swarm_ref --> S
+  S <--> AR
+  M -. reads via API .-> S
+  P -. reads invoice .-> S
+```
+
+- **Money and rules** live on Whitechain: `PaymentRouter` and `InvoiceNote`.
+- **Records and search** live on Arkiv. There is no other database.
+- **Files** live on Swarm. Only the plain reference goes in the Arkiv entity.
+- **Humans** are checked by World ID. Only a `verified` flag goes in the Arkiv entity. Nullifiers stay on the API server.
+- More detail: [`docs/specs/contracts.md`](docs/specs/contracts.md), [`arkiv/schema.md`](arkiv/schema.md), [`PLAN.md`](PLAN.md).
+
+## How each sponsor is used
+
+### Whitechain (Operate, Scale, Tokenize)
+
+| What | Where |
+|---|---|
+| Official USDT `receiveWithAuthorization` called by the router, `to = router` | [`contracts/src/PaymentRouter.sol:162`](contracts/src/PaymentRouter.sol) (`payWithAuthorization` starts at line 147) |
+| The EIP-3009 nonce is forced to `keccak256(abi.encode(router, invoiceId))`, so a signature can't be redirected to another invoice | [`PaymentRouter.sol:160-161`](contracts/src/PaymentRouter.sol), `paymentNonce` at line 169 |
+| Payer-paid fallback `pay()` | [`PaymentRouter.sol:136`](contracts/src/PaymentRouter.sol) |
+| Refund, signed refund, withdraw | [`PaymentRouter.sol:202`](contracts/src/PaymentRouter.sol) `refund`, `:209` `refundWithSig`, `:235` `withdraw` |
+| USDT EIP-712 domain pinned (name "Tether USD", version "1", chain 1874) | [`packages/shared/src/usdt.ts:10`](packages/shared/src/usdt.ts) |
+| Payer signs typed data only, in the browser | [`apps/web/src/routes/pay/index.tsx:106`](apps/web/src/routes/pay/index.tsx) |
+| Relayer: World gate, simulation, budget, rate limits | [`apps/api/src/relayer.ts:174`](apps/api/src/relayer.ts) (gate), `:186` (simulate), `:194` (budget) |
+| Allowlist on `fund` and `transfer`, maturity lock, USDT settlement | [`contracts/src/InvoiceNote.sol:97`](contracts/src/InvoiceNote.sol) `setAllowed`, `:159` `fund`, `:174` `transfer` (maturity check `:178`), `:214` `settle` (`:217`) |
+| Drop-in widget and a 19-line separate store | [`packages/widget/src/index.tsx:22`](packages/widget/src/index.tsx), [`apps/web/src/routes/demo-store/StoreCheckout.tsx`](apps/web/src/routes/demo-store/StoreCheckout.tsx) |
+| Accountant CSV export | [`apps/api/src/app.ts:176`](apps/api/src/app.ts), [`apps/api/src/csv.ts`](apps/api/src/csv.ts) |
+| Foundry proof that the rules revert | [`contracts/test/InvoiceNote.t.sol`](contracts/test/InvoiceNote.t.sol) (for example `test_revert_fund_notAllowlisted`, `test_revert_transfer_afterMaturity`, `test_revert_settle_beforeMaturity`), and 4 fork tests against the real USDT in [`contracts/test/Fork.t.sol`](contracts/test/Fork.t.sol) |
+| Feedback file | [`WHITECHAIN_FEEDBACK.md`](WHITECHAIN_FEEDBACK.md) |
+
+### Arkiv (Build on Arkiv from scratch, plus the Swarm bonus)
+
+| What | Where |
+|---|---|
+| `createArkivStore`: the only data layer | [`packages/arkiv/src/store.ts:496`](packages/arkiv/src/store.ts), used by [`apps/api/src/index.ts:10`](apps/api/src/index.ts) |
+| Four schemas (`paisalink.merchants`, `.invoices`, `.payments`, `.notes`) | [`packages/arkiv/src/schemas.ts`](packages/arkiv/src/schemas.ts) |
+| Expiry rules that follow product logic | [`packages/arkiv/src/mapping.ts:49`](packages/arkiv/src/mapping.ts) `invoiceLifetime` and neighbours |
+| Reads filtered by owner (`ownedBy(writer)`), so forged entities are ignored | [`store.ts:119`](packages/arkiv/src/store.ts), `:148`, `:170`, `:235` |
+| Atomic batch: payment record + invoice `paid` in one transaction | [`store.ts:215`](packages/arkiv/src/store.ts) |
+| Lease renewal with `extendEntity` | [`store.ts:387`](packages/arkiv/src/store.ts) |
+| Live updates with `watchEntityEvents` over WebSocket | [`store.ts:293`](packages/arkiv/src/store.ts) |
+| Features users see that read Arkiv: dashboard list, checkout page, public receipt | [`apps/api/src/routes/merchants.ts:82`](apps/api/src/routes/merchants.ts), [`apps/api/src/app.ts:124`](apps/api/src/app.ts) (`GET /invoices/:id`), [`apps/web/src/routes/receipt/index.tsx`](apps/web/src/routes/receipt/index.tsx) |
+| Swarm PDF upload, plain reference only | [`apps/api/src/swarm.ts:65`](apps/api/src/swarm.ts) `assertPlainReference`, `:97` upload; [`apps/api/src/pdf.ts:117`](apps/api/src/pdf.ts) render, `:225` routes |
+| `swarm_ref` on the invoice entity | [`packages/arkiv/src/schemas.ts:23`](packages/arkiv/src/schemas.ts) |
+| Criterion files | [`arkiv/`](arkiv/) |
+
+### World (Best Use of IDKit)
+
+| What | Where |
+|---|---|
+| IDKit 4.6.0 widget, Proof of Human, signal = merchant wallet | [`apps/web/src/routes/onboard/index.tsx:100`](apps/web/src/routes/onboard/index.tsx) (request), `:174` (widget) |
+| Server-signed request (`signRequest`) | [`apps/api/src/world.ts:321`](apps/api/src/world.ts) |
+| Server-side verification and `worldRoutes` | [`apps/api/src/world.ts:346`](apps/api/src/world.ts) |
+| Signal binding check (`hashSignal`) | [`apps/api/src/world.ts:230`](apps/api/src/world.ts) |
+| Nullifier store (reuse returns `409 NULLIFIER_REUSED`) | [`apps/api/src/world.ts`](apps/api/src/world.ts), file `.data/nullifiers.json` (git-ignored) |
+| The unlock: relayer refuses unverified merchants | [`apps/api/src/relayer.ts:174`](apps/api/src/relayer.ts) |
+| Credential reasoning and debrief | [`docs/WORLD_DEBRIEF.md`](docs/WORLD_DEBRIEF.md) |
+
+## What breaks without each sponsor
+
+- **Without Whitechain:** no official-USDT settlement, no EIP-3009 gasless pay, and no allowlist and maturity rules for the invoice note. There is nothing to refund and nothing to sell.
+- **Without Arkiv:** no invoices, receipts, merchant profiles or notes to show. The dashboard, pay page and receipt page are all empty, because there is no other database.
+- **Without Swarm:** the invoice still works, but there is no permanent, tamper-evident PDF receipt to forward to a client or an accountant.
+- **Without World:** anyone can open unlimited merchant accounts and drain the relayer's gas. The only safe fallback is to turn gasless payment off.
+
+## Why onchain settlement on Whitechain
+
+- A client abroad pays in a dollar stablecoin and the freelancer sees it settle in seconds, with no bank cut and no cut-off hours.
+- A refund is a rule in the router. It can only go back to the recorded payer, and only from the invoice balance. No card network is needed and no chargeback can happen.
+- An invoice sale needs an enforced allowlist, a maturity lock and settlement in the same stablecoin. A normal payment rail can't enforce those rules between strangers. A contract can.
+- The payer signs a message. They never need the network's gas token. That is only possible because the USDT supports EIP-3009.
+
+## Gas and drain protection
+
+How the business pays gas, how the relayer gets WBT, and what stops draining:
+
+- **Who pays:** the relayer wallet pays the WBT gas for each customer payment (about 0.0001 WBT). In a real deployment the business tops up the relayer. In this demo, testnet faucets do.
+- **World ID gate:** only merchants who passed Proof of Human are relayed (`MERCHANT_NOT_VERIFIED` otherwise). One human gets one budget.
+- **Per-merchant budget:** 0.02 WBT per merchant per UTC day (`BUDGET_EXCEEDED`).
+- **Rate limits:** 10 relays per payer address per hour, 60 per IP per hour, 300 per hour in total (`RATE_LIMITED`).
+- **Simulation first:** every relay is run with `eth_call` before it is sent. A reverting call never spends gas.
+- **Tight authorization:** `to` must be our router, `value` must equal the invoice amount, `validBefore` must be within 10 minutes, the nonce is bound to the invoice, and the invoice must be open.
+- **Health:** `GET /health` shows the relayer balance and the queue depth.
+
+## Live vs demo shortcuts
+
+Everything below is a testnet shortcut. Each one is labelled in the UI.
+
+| Shortcut | What it is | What production would do |
+|---|---|---|
+| **Browser-local demo wallets** | `merchant`, `payer` and `investor` keys are generated and stored in this browser's `localStorage` (`apps/web/src/lib/wallet.ts:9`). The UI shows a "testnet demo wallet" tag. They hold only testnet funds. | Real wallets, or embedded or smart-account wallets. |
+| **`POST /demo/fund`: testnet faucet** | Sends test USDT from our deployer wallet to a demo wallet so a judge can try checkout (`apps/api/src/app.ts:212`, `apps/api/src/demo.ts`). It works on chain 1874 only. | No faucet. Clients bring their own USDT. |
+| **`POST /notes/demo-investor`: "demo compliance desk"** | The contract owner (the "compliance officer") allowlists the browser demo investor and sends it a little WBT for gas (`apps/api/src/routes/notes.ts:490`). On chain 1874 only, rate-limited, labelled in the UI. | A compliance officer allowlists an investor after KYC. Nobody is allowlisted automatically. |
+| **Swarm public gateway** | PDFs go up through the Swarm Foundation public gateway, which uses its own postage batch. We do not own a batch and can't see its ID or lifetime ([`arkiv/swarm.md`](arkiv/swarm.md)). | Our own Bee node and our own postage batch. |
+| **World ID staging** | The World app uses the staging environment and the simulator, not the real World App with a real Orb credential. | Production environment and real Proof of Human. |
+| **Short maturity** | Demo notes mature after about 120 seconds so the whole lifecycle fits in a video. | Real due dates, for example 30 days. |
+| **Test USDT** | The official Whitechain testnet USDT, from the faucet and the testnet swap. It is not a token we minted. It has no value. | Mainnet USDT. |
+| **Single Arkiv writer** | One server wallet writes all entities (`ownedBy(writer)` filters reads). | Merchant-owned entities with per-wallet writers, or an access-controlled writer set. |
+
+Nothing in the running app is mocked. Chain calls, Arkiv writes, Swarm uploads and World verification are all real calls to testnets. Fakes exist only inside test files.
+
+## Setup from a clean machine
+
+You need [bun](https://bun.sh) 1.4.3 and [Foundry](https://book.getfoundry.sh/) 1.9. You do not need node or npm.
+
+```bash
+# 1. Install the tools
+curl -fsSL https://bun.sh/install | bash          # bun
+curl -L https://foundry.paradigm.xyz | bash       # then restart the shell and run: foundryup
+export PATH="$HOME/.foundry/bin:$PATH"
+
+# 2. Get the code and install packages (from the repo root)
+git clone https://github.com/aarjn/eth-global-nov-26.git
+cd eth-global-nov-26
+bun install
+
+# 3. Contracts
+cd contracts && forge build && forge test && cd ..
+
+# 4. Environment: copy the template and fill in your own values
+cp .env.example .env.local
+```
+
+`.env.local` is git-ignored. Fill in these names (values are never in the repo):
+
+| Needed for | Variables |
+|---|---|
+| Chain | `WC_RPC_URL=https://rpc.testnet.whitechain.io`, `WC_CHAIN_ID=1874`, `WC_EXPLORER_URL=https://explorer.testnet.whitechain.io`, `USDT_ADDRESS=0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7` |
+| Deploy and relay | `DEPLOYER_PRIVATE_KEY`, `RELAYER_PRIVATE_KEY` (use fresh testnet keys, fund them with WBT from the [Whitechain faucet](https://faucet.testnet.whitechain.io)) |
+| Arkiv writes | `ARKIV_PRIVATE_KEY`, `ARKIV_ACCESS_KEY` (from [hub.arkiv.network](https://hub.arkiv.network)), `ARKIV_RPC_URL` |
+| World ID | `WORLD_APP_ID`, `WORLD_RP_ID`, `WORLD_SIGNING_KEY`, `WORLD_ACTION=paisalink-merchant` (a staging app from the Developer Portal) |
+| Demo wallets (optional) | `DEMO_MERCHANT_PRIVATE_KEY`, `DEMO_PAYER_PRIVATE_KEY`, `DEMO_INVESTOR_PRIVATE_KEY` |
+| Swarm (optional) | leave `BEE_URL` empty to use the public gateway, or set `BEE_URL` and `BEE_BATCH_ID` |
+| Public links (optional) | `PUBLIC_APP_URL` (printed in the PDF), `VITE_API_URL` |
+
+The repo author keeps secrets in a private tool (`bash scripts/load-env.sh` writes `.env.local` from it). You don't have that tool. Copy `.env.example` instead.
+
+```bash
+# 5. Deploy the contracts (needs about 0.03 WBT on the deployer)
+cd contracts
+set -a && . ../.env.local && set +a
+forge script script/Deploy.s.sol --rpc-url whitechain_testnet --broadcast
+bun script/write-deployment.ts      # writes contracts/deployments/1874.json
+bash script/verify.sh               # verifies both contracts on the Whitechain explorer
+cd ..
+# Or skip the deploy and set PAYMENT_ROUTER_ADDRESS and INVOICE_NOTE_ADDRESS to the addresses below.
+
+# 6. Run the API (port 8787) and the web app (port 5173), in two terminals
+bun run dev:api
+bun run dev:web
+```
+
+Then open `http://localhost:5173/merchant`. Useful extras:
+
+```bash
+bun --env-file=.env.local scripts/fund-demo.ts --balances        # WBT and USDT of all demo wallets
+bun --env-file=.env.local scripts/fund-demo.ts payer 60          # move test USDT to the demo payer
+curl http://localhost:8787/health                                  # chain ids, relayer balance, Arkiv status
+```
+
+Routes: `/merchant` (dashboard), `/pay/:id` (payer), `/r/:id` (public receipt), `/invest` (investor), `/onboard` (World ID), `/demo-store` (the widget in a separate shop).
+
+## Contracts and transaction table
+
+Everything is on Whitechain Sepolia testnet (chain id 1874). Explorer: <https://explorer.testnet.whitechain.io>.
+
+The payments use the **official test USDT** `0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7` ([explorer](https://explorer.testnet.whitechain.io/address/0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7)). We did not mint our own token.
+
+### Contracts (verified)
+
+| Contract | Address | Verified source |
+|---|---|---|
+| PaymentRouter | `TODO(live): PaymentRouter address` | `TODO(live): explorer link to verified code` |
+| InvoiceNote | `TODO(live): InvoiceNote address` | `TODO(live): explorer link to verified code` |
+
+Deployer / owner: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. Relayer / operator: `0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F`. Machine-readable record: [`contracts/deployments/1874.json`](contracts/deployments/1874.json) (`deployed` is `false` until the deploy happens).
+
+### Transactions
+
+| Step | Tx hash | Explorer link |
+|---|---|---|
+| Deploy PaymentRouter | `TODO(live): tx hash` | `TODO(live): link` |
+| Deploy InvoiceNote | `TODO(live): tx hash` | `TODO(live): link` |
+| Gasless USDT payment (`payWithAuthorization`, payer paid no gas) | `TODO(live): tx hash` | `TODO(live): link` |
+| Partial refund (`refundWithSig`) | `TODO(live): tx hash` | `TODO(live): link` |
+| Note issued (`issueWithSig`) | `TODO(live): tx hash` | `TODO(live): link` |
+| Note funded by the investor (`fund`) | `TODO(live): tx hash` | `TODO(live): link` |
+| Payment forwarded to note escrow | `TODO(live): tx hash` | `TODO(live): link` |
+| Note settled in USDT (`settle`) | `TODO(live): tx hash` | `TODO(live): link` |
+| Transfer after maturity (reverts with `MaturityPassed`; shown as a failed simulation in the UI) | none (the call reverts before it is sent) | `TODO(live): screenshot` |
+
+## Arkiv: writer wallet and a runnable query
+
+- **Writer wallet** (the only wallet that writes entities): `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. [Rabdi explorer page](https://rabdi.explorer.arkiv.network/address/0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb).
+- **Network:** Arkiv Rabdi testnet, chain id 7794095, RPC `https://rpc.rabdi.db-chain.testnet.arkiv.network`.
+- **Entity example:** `TODO(live): link to one invoice entity on the Rabdi explorer`
+
+Run the query yourself. It reads the entities straight from Arkiv. It needs no API server, no database and no keys:
+
+```bash
+bun install
+bun run scripts/query.ts                       # the demo merchant
+bun run scripts/query.ts 0xYourMerchantAddr    # any merchant address
+```
+
+It prints the exact query it sends. For the demo merchant that is the equivalent of:
+
+```
+arkiv.schema = "paisalink.invoices" AND merchant = 0xC038827b4E362B0de1Be859377508613CD028946 AND $owner = 0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb
+```
+
+Output before any invoice exists: "no merchant entity yet" and "no invoices". After the demo it lists each invoice with its state, amount, pay tx and whether it has a `swarm_ref`. `TODO(live): paste the real output of this command here after the demo data exists.`
+
+Judge files: [`arkiv/schema.md`](arkiv/schema.md), [`arkiv/friction.md`](arkiv/friction.md), [`arkiv/reach.md`](arkiv/reach.md), [`arkiv/why-arkiv.md`](arkiv/why-arkiv.md), [`arkiv/how-you-use-arkiv.md`](arkiv/how-you-use-arkiv.md), [`arkiv/swarm.md`](arkiv/swarm.md).
+
+## Tests
+
+Run on 6 Nov 2026 from a clean tree. The command list is the one in [`docs/handoffs.md`](docs/handoffs.md) ("S1 findings").
+
+```bash
+export PATH=$HOME/.foundry/bin:$PATH
+(cd contracts && forge test)                                         # 79 passed, 1 skipped
+(cd contracts && RUN_FORK=1 forge test --match-contract ForkUSDT)    # 4 passed (real USDT on a fork of chain 1874)
+bun test apps/api                                                    # 126 pass, 1 skip (live Swarm test), 0 fail
+bun test packages                                                    # 47 pass, 6 skip (live Arkiv tests), 0 fail
+(cd apps/web && bun test && bun run typecheck && bun run build)     # 26 pass, typecheck and build green
+```
+
+| Suite | Result |
+|---|---|
+| Foundry unit and fuzz tests (`contracts/test`) | 79 passed, 1 skipped |
+| Foundry fork tests against the real USDT | 4 passed |
+| API tests (`apps/api/test`, includes anvil integration tests of the real compiled contracts) | 126 pass, 1 skip |
+| Package tests (`packages/arkiv`, `packages/shared`) | 47 pass, 6 skip |
+| Web tests (`apps/web`, includes `/invest` and `/onboard`) | 26 pass |
+| **Total** | **282 pass, 8 skip, 0 fail** |
+
+Skipped tests need live services: a live Swarm upload (`SWARM_LIVE=1`) and live Arkiv writes (they need a funded writer and an access key). Counts will change as tests are added. `TODO(live): re-run after the final commit and update these numbers.`
+
+## Current limitations
+
+- Testnet only. Test USDT has no value, and World ID runs in staging.
+- One server wallet writes all Arkiv entities.
+- The relayer and the compliance desk are single wallets with testnet funds.
+- Swarm uploads use a public gateway whose postage batch and retention we can't see.
+- Browser-local demo wallets are not secure storage.
+- Contracts are unaudited. The router has Foundry tests, fuzz tests and fork tests, not a review.
+- Financing: the note price is a fixed demo discount, with no credit check or pricing model.
+- INR amounts shown in the UI are indicative only.
+
+## AI usage
+
+The code was written by Claude agents. Opus wrote the code. Sonnet wrote tests and docs. Fable did the research and the plan. The human builder chose the product, the sponsors and the trade-offs, tested on a phone, and directed and reviewed the work. The prompts and specs are saved in [`docs/prompts/`](docs/prompts/) and [`docs/specs/`](docs/specs/). The per-file list is in [`AI_USAGE.md`](AI_USAGE.md).
+
+## Video chapters
+
+`TODO(live): fill in timestamps after the final cut.`
+
+| Time | Chapter |
+|---|---|
+| `TODO(live)` | Problem |
+| `TODO(live)` | Invoice created (Arkiv entity) |
+| `TODO(live)` | Gasless pay on a phone |
+| `TODO(live)` | Live dashboard, refund |
+| `TODO(live)` | CSV and Swarm PDF |
+| `TODO(live)` | Sell the invoice, rule refusal, settle |
+| `TODO(live)` | World ID denied, then verified |
+| `TODO(live)` | What breaks without each sponsor |
+
+## Licence
+
+MIT. See [`LICENSE`](LICENSE). Copyright (c) 2026 aarjn.
