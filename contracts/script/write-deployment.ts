@@ -28,6 +28,29 @@ broadcast.transactions.forEach((t: any, i: number) => {
 
 if (!addr.paymentRouter || !addr.invoiceNote) throw new Error("broadcast does not contain both CREATE txs");
 
+// First real gasless USDT payment (FirstPayment.s.sol), if it has been broadcast.
+let firstPayment: Record<string, unknown> | null = null;
+const fpFile = Bun.file(join(dir, "broadcast/FirstPayment.s.sol/1874/run-latest.json"));
+if (await fpFile.exists()) {
+  const fp = await fpFile.json();
+  const payTx = fp.transactions.find((t: any) => String(t.function).startsWith("payWithAuthorization"));
+  const createTx = fp.transactions.find((t: any) => String(t.function).startsWith("createInvoiceFor"));
+  const payReceipt = payTx && fp.receipts.find((r: any) => r.transactionHash === payTx.hash);
+  if (payTx && payReceipt?.status === "0x1") {
+    firstPayment = {
+      invoiceId: payTx.arguments[0],
+      payer: checksum(payTx.arguments[1]),
+      amountUsdtBase: payTx.arguments[2],
+      gasless: true,
+      submittedBy: checksum(payTx.transaction.from),
+      createInvoiceTx: createTx?.hash ?? null,
+      payTx: payTx.hash,
+      block: Number(payReceipt.blockNumber),
+      explorer: `https://explorer.testnet.whitechain.io/tx/${payTx.hash}`,
+    };
+  }
+}
+
 const out = {
   chainId: 1874,
   deployed: true,
@@ -41,6 +64,7 @@ const out = {
   PaymentRouter: { address: addr.paymentRouter, tx: txs.paymentRouter },
   InvoiceNote: { address: addr.invoiceNote, tx: txs.invoiceNote },
   txs,
+  firstPayment,
   explorer: {
     paymentRouter: `https://explorer.testnet.whitechain.io/address/${addr.paymentRouter}`,
     invoiceNote: `https://explorer.testnet.whitechain.io/address/${addr.invoiceNote}`,

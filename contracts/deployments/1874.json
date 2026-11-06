@@ -22,6 +22,17 @@
     "setAllowed:0xe7CfE30ED69450427FFf6bbBe143E5da71E4AF87": "0xd178ea3ede8cd9ac5882e53e9bb526a74e1f82f815222c71b5b233f63c739718",
     "setAllowed:0x32c84603C9848FFa470FB07C9bCe820944D04c52": "0xbb479dda00133e44aa6a674beb44d3951a505aa1ce342ec0a4b77eafb67f8614"
   },
+  "firstPayment": {
+    "invoiceId": "0x5d8f773feb611ae3b9d7742a517c1466fd6ebb27aa4fa17acbfd6554e9d1741b",
+    "payer": "0x32c84603C9848FFa470FB07C9bCe820944D04c52",
+    "amountUsdtBase": "1000000",
+    "gasless": true,
+    "submittedBy": "0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F",
+    "createInvoiceTx": "0x7d1691af36df3c37c58f34400becd60a1d2319429e18b9d12e36508eeacaf8f0",
+    "payTx": "0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e",
+    "block": 12344366,
+    "explorer": "https://explorer.testnet.whitechain.io/tx/0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e"
+  },
   "explorer": {
     "paymentRouter": "https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005",
     "invoiceNote": "https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7"

@@ -13,6 +13,8 @@ export interface Deployment {
   invoiceNote: Address | null;
   deployBlock: number | null;
   txs: Partial<Record<"paymentRouter" | "invoiceNote" | "setNoteContract" | string, Hex>>;
+  /** First real gasless USDT payment (FirstPayment.s.sol), null until broadcast. */
+  firstPayment?: { invoiceId: Hex; payer: Address; amountUsdtBase: string; gasless: true; submittedBy: Address; createInvoiceTx: Hex | null; payTx: Hex; block: number; explorer: string } | null;
 }
 
 export const DEPLOYMENT = deployment as unknown as Deployment;
