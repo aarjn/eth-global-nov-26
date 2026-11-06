@@ -1,0 +1,20 @@
+{
+  "name": "@paisalink/react",
+  "version": "0.1.0",
+  "description": "Drop-in PaisaLink checkout: <PaisaLink amount merchant onPaid /> and a script-tag embed.js loader",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "exports": { ".": "./src/index.tsx", "./core": "./src/core.ts" },
+  "scripts": {
+    "build:embed": "bun build src/embed.ts --outfile dist/embed.js --minify --target browser",
+    "test": "bun test"
+  },
+  "peerDependencies": { "react": ">=18" },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "@types/react": "19.3.0",
+    "react": "19.3.1"
+  }
+}

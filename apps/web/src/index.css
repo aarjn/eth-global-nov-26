@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --color-brand-50: #ecfdf6;
+  --color-brand-100: #d1fae9;
+  --color-brand-200: #a6f2d6;
+  --color-brand-300: #6de3be;
+  --color-brand-400: #34cba0;
+  --color-brand-500: #12ae86;
+  --color-brand-600: #0b7a5c;
+  --color-brand-700: #0a6a50;
+  --color-brand-800: #0b5541;
+  --color-brand-900: #0a4636;
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #d5d9e1;
+  --color-ink-300: #b1b8c6;
+  --color-ink-400: #8a93a6;
+  --color-ink-500: #677086;
+  --color-ink-600: #4f576b;
+  --color-ink-700: #3c4356;
+  --color-ink-800: #252b3b;
+  --color-ink-900: #111627;
+  --color-saffron-500: #f59e0b;
+  --color-canvas: #f4f6f5;
+  --shadow-card: 0 1px 2px rgba(17, 22, 39, 0.04), 0 8px 24px -8px rgba(17, 22, 39, 0.08);
+  --shadow-brand: 0 10px 24px -10px rgba(11, 122, 92, 0.55);
+}
+
+html { -webkit-tap-highlight-color: transparent; }
+body { @apply bg-canvas text-ink-900 antialiased; font-feature-settings: "cv11", "ss01"; }
+.tabular { font-variant-numeric: tabular-nums; }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }
+.animate-pop { animation: pop .45s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes rise { from { transform: translateY(8px); opacity: 0 } to { transform: none; opacity: 1 } }
+.animate-rise { animation: rise .3s ease-out both; }
