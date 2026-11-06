@@ -1,0 +1,23 @@
+{
+  "name": "@paisalink/arkiv",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bun ./node_modules/.bin/tsc -p .",
+    "test:live": "ARKIV_LIVE=1 bun --env-file=../../.env.local test test/live.test.ts",
+    "setup": "bun --env-file=../../.env.local ../../scripts/arkiv-setup.ts"
+  },
+  "dependencies": {
+    "@arkiv-network/sdk": "1.0.1",
+    "@paisalink/shared": "workspace:*",
+    "viem": "2.57.16"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.3",
+    "typescript": "7.0.2"
+  }
+}
