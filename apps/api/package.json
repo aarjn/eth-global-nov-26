@@ -12,6 +12,7 @@
   "dependencies": {
     "@paisalink/arkiv": "workspace:*",
     "@paisalink/shared": "workspace:*",
+    "@worldcoin/idkit-core": "4.6.0",
     "hono": "4.13.16",
     "viem": "2.57.16"
   },
