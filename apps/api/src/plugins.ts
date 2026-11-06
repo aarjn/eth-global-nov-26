@@ -25,6 +25,7 @@ const PLUGINS: { file: string; exports: string[]; arg: "store" | "ctx" }[] = [
   { file: "world.ts", exports: ["worldRoutes", "default"], arg: "ctx" },
   { file: "pdf.ts", exports: ["pdfRoutes", "default"], arg: "ctx" },
   { file: "swarm.ts", exports: ["pdfRoutes", "swarmRoutes"], arg: "ctx" },
+  { file: "routes/notes.ts", exports: ["notesRoutes"], arg: "ctx" },
 ];
 
 export async function mountPlugins(app: Hono<any>, ctx: PluginContext, dir: string = import.meta.dir): Promise<string[]> {
