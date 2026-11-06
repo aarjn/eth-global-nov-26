@@ -1,0 +1,19 @@
+# Never send secrets, local data or big build output into the image build.
+.git
+**/node_modules
+.env
+.env.*
+!.env.example
+.data
+research
+recordings
+CLAUDE.md
+**/dist
+apps/web/test-results
+apps/web/playwright-report
+contracts/out
+contracts/cache
+contracts/lib
+contracts/broadcast
+video
+*.log
