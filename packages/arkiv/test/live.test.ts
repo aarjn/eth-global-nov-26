@@ -14,6 +14,7 @@ describe.skipIf(!live)("Arkiv live (Rabdi)", () => {
   const merchant = privateKeyToAccount(generatePrivateKey()).address;
   const invoiceId = keccak256(toHex(`live-test-${Date.now()}-${Math.random()}`)) as Hex;
   const txHash = keccak256(toHex(`fake-wc-tx-${invoiceId}`)) as Hex; // a Whitechain hash is just a string here
+  const dueAt = Math.floor(Date.now() / 1000) - 60; // fixed, so the repeat upsert is identical
   const seen: string[] = [];
   let unwatch: (() => void) | undefined;
 
@@ -25,7 +26,7 @@ describe.skipIf(!live)("Arkiv live (Rabdi)", () => {
     expect(store.writes.at(-1)!.op).toBe("create");
     console.log("merchant entity:", store.writes.at(-1)!.explorerUrl);
 
-    const inv: Invoice = { invoiceId, merchant, amountUsdt: "12.34", dueAt: Math.floor(Date.now() / 1000) - 60, memo: "live test", state: "open" };
+    const inv: Invoice = { invoiceId, merchant, amountUsdt: "12.34", dueAt, memo: "live test", state: "open" };
     await store.upsertInvoice(inv);
     expect(store.writes.at(-1)!.op).toBe("create");
     console.log("invoice entity:", store.writes.at(-1)!.explorerUrl);
@@ -38,7 +39,7 @@ describe.skipIf(!live)("Arkiv live (Rabdi)", () => {
   }, 90_000);
 
   test("same upsert again is a no-op (no tx)", async () => {
-    await store.upsertInvoice({ invoiceId, merchant, amountUsdt: "12.34", dueAt: Math.floor(Date.now() / 1000) - 60, memo: "live test", state: "open" });
+    await store.upsertInvoice({ invoiceId, merchant, amountUsdt: "12.34", dueAt, memo: "live test", state: "open" });
     expect(store.writes.at(-1)!.op).toBe("noop");
   }, 30_000);
 
