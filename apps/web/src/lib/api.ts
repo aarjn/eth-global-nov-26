@@ -40,6 +40,8 @@ export function friendlyError(e: unknown): string {
       case "RATE_LIMITED": return "Too many attempts. Please wait a minute and try again.";
       case "BAD_AUTHORIZATION": return "The payment approval didn't match this invoice. Please refresh and try again.";
       case "SIMULATION_FAILED": return "The payment couldn't go through (it was checked before sending, nothing was charged).";
+      case "SWARM_NOT_CONFIGURED": return "PDF publishing to Swarm isn't set up on this server yet.";
+      case "SWARM_UPLOAD_FAILED": return "Swarm didn't accept the upload just now. Please try again.";
       case "HANDLE_TAKEN": return "That handle is taken. Try another one.";
       case "ARKIV_UNAVAILABLE": return "Our records service is slow right now. Please try again in a few seconds.";
       case "ARKIV_RATE_LIMITED": return "Our records service is busy. Please wait a minute and try again.";

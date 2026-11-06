@@ -8,6 +8,7 @@ import { getLocalAccount } from "../../lib/wallet";
 import { ago, inr, money } from "../../lib/format";
 import { Link } from "../../lib/router";
 import { CreateInvoice } from "./CreateInvoice";
+import { claimAutoPublish, publishInvoicePdf } from "../../lib/swarm";
 import { InvoiceList } from "./InvoiceList";
 
 export default function MerchantPage() {
@@ -33,6 +34,11 @@ export default function MerchantPage() {
         if (was === "open" && inv.state === "paid") {
           setToast(`Payment received: ${money(inv.amountUsdt)} USDT${inv.memo ? ` · ${inv.memo}` : ""}`);
           setTimeout(() => setToast(null), 6000);
+          // Publish the receipt PDF to Swarm once, in the background (errors such as "not configured" are ignored here;
+          // the row's "Publish PDF to Swarm" button shows them if the merchant retries by hand).
+          if (!inv.swarmRef && claimAutoPublish(inv.invoiceId)) {
+            publishInvoicePdf(inv.invoiceId).then(() => void refresh()).catch(() => {});
+          }
         }
       }
     }

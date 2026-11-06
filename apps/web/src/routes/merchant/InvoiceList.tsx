@@ -7,6 +7,8 @@ import { payLink } from "../../lib/config";
 import { dateStr, money, short } from "../../lib/format";
 import { Link } from "../../lib/router";
 import { refundInvoice, type RefundResult } from "../../lib/sign";
+import { pdfPreviewUrl, publishInvoicePdf } from "../../lib/swarm";
+import { swarmUrl } from "../../lib/config";
 import { CopyButton } from "./CopyButton";
 
 export function InvoiceList({ invoices, account, noted, onChanged }: { invoices: Invoice[] | null; account: PrivateKeyAccount; noted?: Set<string>; onChanged: () => void }) {
@@ -54,6 +56,7 @@ function InvoiceRow({ inv, account, financed, onChanged }: { inv: Invoice; accou
       Financed: {inv.state === "paid" ? "the payment is in escrow for the investor" : "funds will be held in escrow for the investor when the client pays"}, so it can't be refunded here.{" "}
       <Link href={`/invest?invoice=${inv.invoiceId}`} className="underline">View note</Link>
     </p>}
+    <SwarmPdf inv={inv} onPublished={onChanged} />
     {(inv.payTx || (inv as Invoice & { arkivUrl?: string }).arkivUrl) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
       {inv.payTx && <TxLink hash={inv.payTx} label="Payment transaction" />}
       {(inv as Invoice & { arkivUrl?: string }).arkivUrl && <a href={(inv as Invoice & { arkivUrl?: string }).arkivUrl} target="_blank" rel="noreferrer"
@@ -96,5 +99,31 @@ function RefundPanel({ inv, account, onClose, onDone }: { inv: Invoice; account:
       <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
     </div>
     {err && <div className="mt-3"><Alert>{err}</Alert></div>}
+  </div>;
+}
+
+/** "Publish PDF to Swarm" -> spinner -> "Open PDF on Swarm". The API stores the reference on the Arkiv invoice entity. */
+function SwarmPdf({ inv, onPublished }: { inv: Invoice; onPublished: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const link = url ?? (inv.swarmRef ? swarmUrl(inv.swarmRef) : null);
+  const publish = async () => {
+    setBusy(true); setErr(null);
+    try { setUrl((await publishInvoicePdf(inv.invoiceId, inv.swarmRef)).url); onPublished(); }
+    catch (e) { setErr(friendlyError(e)); }
+    finally { setBusy(false); }
+  };
+  return <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+    {link ? <a href={link} target="_blank" rel="noreferrer" data-testid="swarm-link"
+      className="inline-flex items-center gap-1 font-semibold text-ink-800 hover:underline">
+      <svg className="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l5 5v13H7z M14 3v5h5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
+      Open PDF on Swarm</a>
+      : <button type="button" onClick={publish} disabled={busy}
+        className="inline-flex items-center gap-1.5 font-semibold text-ink-600 hover:text-ink-900 disabled:opacity-60">
+        {busy ? <><Spinner className="size-3.5" /> Publishing PDF to Swarm…</> : "Publish PDF to Swarm"}
+      </button>}
+    {!link && !busy && <a href={pdfPreviewUrl(inv.invoiceId)} target="_blank" rel="noreferrer" className="text-xs text-ink-400 hover:underline">Preview</a>}
+    {err && <span className="text-xs font-medium text-rose-700" role="alert">{err}</span>}
   </div>;
 }

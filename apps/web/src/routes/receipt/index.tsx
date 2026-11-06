@@ -3,6 +3,7 @@ import type { Hex, Invoice, Merchant, Payment } from "@paisalink/shared";
 import { Alert, Button, Logo, Spinner, StateBadge, TxLink } from "../../components/ui";
 import { api, ApiError, friendlyError } from "../../lib/api";
 import { explorerAddressUrl, swarmUrl } from "../../lib/config";
+import { pdfPreviewUrl } from "../../lib/swarm";
 import { dateStr, dateTimeStr, inr, money, short } from "../../lib/format";
 
 interface Receipt { invoice: Invoice; payment: Payment | null; merchant: Merchant | null }
@@ -77,7 +78,7 @@ function ReceiptCard({ r }: { r: Receipt }) {
         className="flex items-center justify-center gap-2 rounded-2xl bg-ink-900 py-3 text-sm font-semibold text-white hover:bg-ink-800 print:hidden">
         <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h7l5 5v13H7z M14 3v5h5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
         Open PDF on Swarm</a>
-        : <p className="text-center text-xs text-ink-400">PDF copy not published for this invoice.</p>}
+        : <p className="text-center text-xs text-ink-400">PDF copy not published to Swarm yet. <a className="underline print:hidden" href={pdfPreviewUrl(inv.invoiceId)} target="_blank" rel="noreferrer">Preview PDF</a></p>}
       <p className="text-center text-xs text-ink-400">Settled in USDT on Whitechain. This receipt is read live from the invoice record stored on Arkiv.</p>
     </div>
   </article>;
