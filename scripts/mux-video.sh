@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Joins the demo clips with the owner's voice-over into one video.
-#   in:  recordings/cut/ch01.mp4 … ch11.mp4 (from scripts/cut-clips.sh; falls back to recordings/chNN.mp4 when
-#        recordings/cut/ does not exist) and recordings/audio/ch01.* … ch11.* (any audio format ffmpeg reads)
+#   in:  recordings/final/ch01.mp4 … ch11.mp4 (public URL patched), else recordings/cut/, else recordings/chNN.mp4
+#        (all from scripts/cut-clips.sh) and recordings/audio/ch01.* … ch11.* (any audio format ffmpeg reads)
 #   out: recordings/paisalink-demo.mp4 (H.264 1080p30 + AAC)
 # Each clip is fitted to its own audio: if the audio is longer, the last frame is held; if the clip is longer,
 # its tail is trimmed. A chapter with no audio file keeps its clip length with silence (and a warning).
@@ -12,7 +12,7 @@ DIR="${1:-$(cd "$(dirname "$0")/.." && pwd)/recordings}"
 OUT="$DIR/paisalink-demo.mp4"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-SRC="$DIR"; [ -d "$DIR/cut" ] && SRC="$DIR/cut"
+SRC="$DIR"; [ -d "$DIR/cut" ] && SRC="$DIR/cut"; [ -d "$DIR/final" ] && SRC="$DIR/final"
 echo "clips from $SRC"
 dur() { ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$1"; }
 

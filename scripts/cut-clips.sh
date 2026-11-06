@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Cuts recordings/chNN.mp4 to the ranges in recordings/cuts.txt and writes recordings/cut/chNN.mp4
-# (H.264 1080p30, no audio). Hard cuts only, real time, never sped up. Then builds:
+# (H.264 1080p30, no audio). Hard cuts only, real time, never sped up. Then runs scripts/patch-public-url.sh
+# (recordings/final/: the test-server IP replaced by the public URL, same lengths) and builds:
 #   recordings/preview-silent.mp4  all cut clips joined, chapter number + countdown in the top-right corner
 #   recordings/timings.txt         start, length and word budget (2.5 words/s) of each chapter
 # Usage: bash scripts/cut-clips.sh [recordings-dir]
@@ -39,18 +40,22 @@ for n in 01 02 03 04 05 06 07 08 09 10 11; do
   ffmpeg -v error -y -i "$src" -filter_complex "${parts}${ins}concat=n=$k:v=1:a=0,fps=30,$tail[v]" -map "[v]" "${ENC[@]}" "$OUTD/ch$n.mp4"
 done
 
-# timings + silent preview with chapter number and countdown
+# replace the private test-server address with the public URL: recordings/final/ (same frame counts as cut/)
+bash "$(dirname "$0")/patch-public-url.sh" "$DIR"
+PREV="$DIR/final"
+
+# timings + silent preview (from final/) with chapter number and countdown
 words_for() { # word budget at 2.5 words/s, rounded down
   awk -v d="$1" 'BEGIN { printf "%d", d * 2.5 }'
 }
 {
-  printf 'PaisaLink demo: cut clips (recordings/cut/), real time, 30 fps. Word budget = length x 2.5 words/s.\n'
+  printf 'PaisaLink demo: final clips (recordings/final/ = cut/ + public URL patch), real time, 30 fps. Word budget = length x 2.5 words/s.\n'
   printf '%-4s  %-8s  %-7s  %-6s  %s\n' "ch" "start" "length" "words" "shows"
 } > "$DIR/timings.txt"
 : > "$WORK/list.txt"
 t=0
 for n in 01 02 03 04 05 06 07 08 09 10 11; do
-  c="$OUTD/ch$n.mp4"; d="$(dur "$c")"; i=$((10#$n))
+  c="$PREV/ch$n.mp4"; d="$(dur "$c")"; i=$((10#$n))
   printf '%-4s  %-8s  %-7s  %-6s  %s\n' "ch$n" "$(awk -v t="$t" 'BEGIN { printf "%d:%04.1f", t/60, t%60 }')" \
     "$(printf '%.1f s' "$d")" "$(words_for "$d")" "${TITLES[$i]}" >> "$DIR/timings.txt"
   label="ch$n  ${TITLES[$i]}"
