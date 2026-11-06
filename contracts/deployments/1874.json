@@ -1,0 +1,11 @@
+{
+  "chainId": 1874,
+  "deployed": false,
+  "usdt": "0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7",
+  "owner": "0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb",
+  "operator": "0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F",
+  "paymentRouter": null,
+  "invoiceNote": null,
+  "deployBlock": null,
+  "txs": {}
+}
