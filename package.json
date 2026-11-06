@@ -1,0 +1,14 @@
+{
+  "name": "paisalink",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "env": "bash scripts/load-env.sh",
+    "dev:api": "bun --cwd apps/api run dev",
+    "dev:web": "bun --cwd apps/web run dev",
+    "gen:abi": "bun scripts/gen-abi.ts",
+    "test:contracts": "cd contracts && forge test",
+    "test:all": "bun run test:contracts && bun test"
+  }
+}
