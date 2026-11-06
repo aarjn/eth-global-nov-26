@@ -110,4 +110,29 @@ contract ForkUSDTTest is Test {
         note.settle(nid);
         assertEq(usdt.balanceOf(investor), 500e6 - 97e6 + 100e6);
     }
+
+    /// Against the LIVE deployment in deployments/1874.json (forked state, nothing is broadcast).
+    function test_fork_liveDeployment_wiringAndGaslessPay() public {
+        string memory json = vm.readFile(string.concat(vm.projectRoot(), "/deployments/1874.json"));
+        PaymentRouter live = PaymentRouter(vm.parseJsonAddress(json, ".paymentRouter"));
+        InvoiceNote liveNote = InvoiceNote(vm.parseJsonAddress(json, ".invoiceNote"));
+        address liveRelayer = 0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F;
+        assertEq(address(live.usdt()), USDT);
+        assertEq(live.operator(), liveRelayer);
+        assertEq(live.noteContract(), address(liveNote));
+        assertEq(address(liveNote.router()), address(live));
+        assertEq(live.owner(), 0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb);
+        assertTrue(liveNote.allowed(0xe7CfE30ED69450427FFf6bbBe143E5da71E4AF87));
+
+        bytes32 id = keccak256("fork-live-invoice");
+        vm.prank(liveRelayer);
+        live.createInvoiceFor(id, merchant, 2e6, 0);
+        bytes32 nonce = live.paymentNonce(id);
+        uint256 vb = block.timestamp + 600;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(address(live), 2e6, vb, nonce);
+        vm.prank(liveRelayer);
+        live.payWithAuthorization(id, payer, 2e6, 0, vb, nonce, v, r, s);
+        assertEq(uint8(live.getInvoice(id).status), uint8(PaymentRouter.Status.Paid));
+        assertEq(live.getInvoice(id).balance, 2e6);
+    }
 }

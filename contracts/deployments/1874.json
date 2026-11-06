@@ -7,6 +7,14 @@
   "paymentRouter": "0x97613d5bE2c3dd747c110b460Ff2e0FC69701005",
   "invoiceNote": "0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7",
   "deployBlock": 12343606,
+  "PaymentRouter": {
+    "address": "0x97613d5bE2c3dd747c110b460Ff2e0FC69701005",
+    "tx": "0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf"
+  },
+  "InvoiceNote": {
+    "address": "0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7",
+    "tx": "0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf"
+  },
   "txs": {
     "paymentRouter": "0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf",
     "invoiceNote": "0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf",

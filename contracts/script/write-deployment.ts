@@ -37,6 +37,9 @@ const out = {
   paymentRouter: addr.paymentRouter,
   invoiceNote: addr.invoiceNote,
   deployBlock,
+  // Nested shape read by scripts/load-env.sh (PAYMENT_ROUTER_ADDRESS / INVOICE_NOTE_ADDRESS).
+  PaymentRouter: { address: addr.paymentRouter, tx: txs.paymentRouter },
+  InvoiceNote: { address: addr.invoiceNote, tx: txs.invoiceNote },
   txs,
   explorer: {
     paymentRouter: `https://explorer.testnet.whitechain.io/address/${addr.paymentRouter}`,
