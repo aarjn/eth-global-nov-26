@@ -27,7 +27,7 @@ const HOUR = 3_600_000;
 const AMOUNT_RE = /^(0|[1-9]\d{0,8})(\.\d{1,6})?$/;
 const MAX_MEMO_BYTES = 128;
 
-export type ChangeKind = "invoice" | "payment";
+export type ChangeKind = "invoice" | "payment" | "note";
 export type ChangeListener = (merchant: Address, kind: ChangeKind, invoiceId: Hex) => void;
 
 // ---------- pure validation helpers (unit tested) ----------
@@ -118,9 +118,11 @@ export class Relayer {
   readonly budget: GasBudget;
   readonly limits: {
     global: SlidingWindowLimiter; ip: SlidingWindowLimiter; payer: SlidingWindowLimiter;
-    invoiceIp: SlidingWindowLimiter; invoiceMerchant: SlidingWindowLimiter;
+    invoiceIp: SlidingWindowLimiter; invoiceMerchant: SlidingWindowLimiter; syncIp: SlidingWindowLimiter;
   };
-  readonly stats = { relayed: 0, invoicesCreated: 0, refunds: 0, withdrawals: 0, rejected: {} as Record<string, number> };
+  readonly stats = { relayed: 0, invoicesCreated: 0, refunds: 0, withdrawals: 0, synced: 0, rejected: {} as Record<string, number> };
+  /** Delay between receipt lookups in syncPayment (tests set 0). */
+  syncRetryMs = 1500;
   private inflightInvoices = new Set<string>();
   private usedNonces = new Set<string>();
   private listeners = new Set<ChangeListener>();
@@ -139,6 +141,7 @@ export class Relayer {
       payer: new SlidingWindowLimiter(L.payerPerHour, HOUR, this.clock),
       invoiceIp: new SlidingWindowLimiter(L.invoiceIpPerHour, HOUR, this.clock),
       invoiceMerchant: new SlidingWindowLimiter(L.invoiceMerchantPerHour, HOUR, this.clock),
+      syncIp: new SlidingWindowLimiter(120, HOUR, this.clock),
     };
   }
 
@@ -433,6 +436,51 @@ export class Relayer {
       txHash: out.txHash, explorerUrl: this.txUrl(out.txHash), invoiceId: inv.invoiceId,
       withdrawnUsdt: ev ? formatUnits(BigInt(ev.args.amount as bigint), USDT_DECIMALS) : undefined,
     };
+  }
+
+  // ---- POST /invoices/:id/sync {txHash} ----
+  /** Mirror a payment the payer made themselves (PaymentRouter.pay(), payer pays gas) into the store. The client's
+   *  claim is never trusted: only a successful receipt with an InvoicePaid event for THIS invoice, emitted by OUR
+   *  router, counts. Idempotent: re-syncing the same tx returns the stored payment. Sends no tx, spends no budget.
+   *  Also repairs a relayed payment whose store write failed (the event's `gasless` flag is recorded as is). */
+  async syncPayment(invoiceId: Hex, body: unknown, ip: string) {
+    const txHash = parseBytes32((body as Record<string, unknown> | null)?.txHash, "txHash");
+    this.limit([{ limiter: this.limits.syncIp, key: ip, name: "sync per IP" }]);
+    const inv = await this.loadInvoice(invoiceId);
+    const existing = await this.store.getPayment(inv.invoiceId);
+    if (existing && existing.txHash.toLowerCase() === txHash) {
+      return { invoiceId: inv.invoiceId, txHash: existing.txHash, explorerUrl: this.txUrl(existing.txHash), state: inv.state, payment: existing, alreadySynced: true };
+    }
+    // A just-mined tx may not be visible on every RPC node yet: retry briefly.
+    let out: TxOutcome | null = null;
+    for (let i = 0; i < 4 && !out; i++) {
+      out = await this.chain.receipt(txHash);
+      if (!out && i < 3) await new Promise((r) => setTimeout(r, this.syncRetryMs));
+    }
+    if (!out) this.reject(new ApiError("TX_NOT_FOUND", "transaction not found or not mined yet; retry shortly"));
+    if (out.status !== "success") this.reject(new ApiError("TX_FAILED", "transaction reverted on chain", { txHash, explorerUrl: this.txUrl(txHash) }));
+    const ev = out.events.find((e) => e.name === "InvoicePaid" && String(e.args.invoiceId).toLowerCase() === inv.invoiceId.toLowerCase());
+    if (!ev) this.reject(new ApiError("BAD_REQUEST", "transaction did not pay this invoice through the PaisaLink PaymentRouter"));
+    if (existing) {
+      // The invoice is payable once on chain, so a stored payment with another tx already reflects the truth.
+      return { invoiceId: inv.invoiceId, txHash: existing.txHash, explorerUrl: this.txUrl(existing.txHash), state: inv.state, payment: existing, alreadySynced: true };
+    }
+    const payment: Payment = {
+      invoiceId: inv.invoiceId, merchant: inv.merchant, payer: getAddress(String(ev.args.payer)),
+      amountUsdt: formatUnits(BigInt(ev.args.amount as bigint), USDT_DECIMALS), txHash: out.txHash,
+      gasless: Boolean(ev.args.gasless), paidAt: out.blockTimestamp,
+    };
+    // Never move an invoice backwards (refunded/settled stay as they are); open or financed -> paid.
+    const nextState = inv.state === "open" || inv.state === "financed" ? "paid" as const : inv.state;
+    const w1 = nextState !== inv.state || !inv.payTx
+      ? await this.persist("upsertInvoice", () => this.store.upsertInvoice({ ...inv, state: nextState, payTx: out.txHash }))
+      : undefined;
+    const w2 = await this.persist("recordPayment", () => this.store.recordPayment(payment));
+    if (w2) throw new ApiError("INTERNAL", "payment verified on chain but not saved to Arkiv; retry", { txHash });
+    this.stats.synced++;
+    this.notify(inv.merchant, "invoice", inv.invoiceId);
+    this.notify(inv.merchant, "payment", inv.invoiceId);
+    return { invoiceId: inv.invoiceId, txHash: out.txHash, explorerUrl: this.txUrl(out.txHash), state: nextState, payment, ...(w1 ? { storeWarning: w1 } : {}) };
   }
 
   budgetFor(m: Address) {

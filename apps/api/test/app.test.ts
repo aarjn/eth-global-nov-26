@@ -80,6 +80,27 @@ describe("HTTP routes", () => {
     await reader.cancel().catch(() => {});
   });
 
+  test("arkivUrl is added when the store knows the entity key; note kind reaches SSE", async () => {
+    const s = await setup();
+    (s.store as any).explorerUrlFor = (kind: string, id: string) => `https://rabdi.explorer.arkiv.network/entity/0x${kind}-${id.slice(2, 6)}`;
+    const inv = await s.createInvoice();
+    const r = await s.post("/invoices", { merchant: s.merchantAcct.address, amountUsdt: "3", dueAt: s.nowSec() + 999 });
+    expect(((await r.json()) as any).arkivUrl).toContain("rabdi.explorer.arkiv.network/entity/0xinvoice-");
+    const g = (await (await s.app.request(`/invoices/${inv.invoiceId}`)).json()) as any;
+    expect(g.arkivUrl).toContain("/entity/0xinvoice-");
+    const rec = (await (await s.app.request(`/invoices/${inv.invoiceId}/receipt`)).json()) as any;
+    expect(rec.merchant.arkivUrl).toContain("/entity/0xmerchant-");
+
+    const ac = new AbortController();
+    const res = await s.app.request(`/merchants/${s.merchantAcct.address}/events`, { signal: ac.signal });
+    const reader = res.body!.getReader(); const dec = new TextDecoder(); let buf = "";
+    const until = async (p: (b: string) => boolean) => { while (!p(buf)) buf += dec.decode((await reader.read()).value); };
+    await until((b) => b.includes("event: ready"));
+    s.relayer.notify(s.merchantAcct.address, "note", inv.invoiceId);
+    await until((b) => b.includes('"kind":"note"'));
+    ac.abort(); await reader.cancel().catch(() => {});
+  });
+
   test("unknown route and bad JSON return error codes", async () => {
     const s = await setup();
     expect(((await (await s.app.request("/nope")).json()) as any).code).toBe("NOT_FOUND");

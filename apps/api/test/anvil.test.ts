@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { createPublicClient, createWalletClient, http, parseUnits, type Hex } from "viem";
+import { createPublicClient, createWalletClient, erc20Abi, http, parseUnits, type Hex } from "viem";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { USDT_ADDRESS, buildReceiveAuthTypedData, invoicePaymentNonce, paymentRouterAbi, whitechainTestnet } from "@paisalink/shared";
 import { loadConfig } from "../src/config";
@@ -114,7 +114,7 @@ describe.skipIf(!available)("anvil: real PaymentRouter through the production vi
     expect(after.refunded).toBe(49_000_000n);
   }, 60_000);
 
-  test("unverified merchant cannot use the relayer", async () => {
+  test("unverified merchant cannot use the relayer; self-paid pay() is mirrored via /sync", async () => {
     const m2 = privateKeyToAccount(generatePrivateKey());
     await store.upsertMerchant({ wallet: m2.address, handle: "unverified", verified: false, gasUsedWei: "0", createdAt: 1 });
     const now = Math.floor(Date.now() / 1000);
@@ -123,6 +123,21 @@ describe.skipIf(!available)("anvil: real PaymentRouter through the production vi
     const r = await post("/relay", { invoiceId: inv.invoiceId, authorization, signature: await payer.signTypedData(buildReceiveAuthTypedData(authorization)) });
     expect(r.status).toBe(403);
     expect(((await r.json()) as any).code).toBe("MERCHANT_NOT_VERIFIED");
+
+    // Self-paid fallback: the payer approves + calls PaymentRouter.pay() with their own gas, then the web calls /sync.
+    await pub.request({ method: "anvil_setBalance" as any, params: [payer.address, "0x56BC75E2D63100000"] as any });
+    const pw = createWalletClient({ account: payer, chain, transport: http(RPC) });
+    await pub.waitForTransactionReceipt({ hash: await pw.writeContract({ address: USDT_ADDRESS, abi: erc20Abi, functionName: "approve", args: [router, 5_000_000n] }) });
+    const payHash = await pw.writeContract({ address: router, abi: paymentRouterAbi, functionName: "pay", args: [inv.invoiceId] });
+    await pub.waitForTransactionReceipt({ hash: payHash });
+    const sy = await post(`/invoices/${inv.invoiceId}/sync`, { txHash: payHash });
+    const sj = (await sy.json()) as any;
+    expect(sy.status).toBe(200);
+    expect(sj.state).toBe("paid");
+    expect(sj.payment.gasless).toBe(false);
+    expect(sj.payment.payer).toBe(payer.address);
+    expect((await store.getInvoice(inv.invoiceId))!.state).toBe("paid");
+    expect(((await (await post(`/invoices/${inv.invoiceId}/sync`, { txHash: payHash })).json()) as any).alreadySynced).toBe(true);
   }, 30_000);
 
   test("demo faucet sends real (anvil) test USDT and refuses a second grant", async () => {

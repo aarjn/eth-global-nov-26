@@ -43,6 +43,9 @@ export interface RouterChain {
   /** Sends through the single-wallet tx queue. Returns the tx hash. */
   send(call: RouterCall, sim: Simulation): Promise<Hex>;
   wait(hash: Hex): Promise<TxOutcome>;
+  /** Mined receipt of any tx (e.g. a payer's self-paid pay()), decoded with PaymentRouter events from OUR router
+   *  address only. null if the tx is unknown or not mined yet. Never waits long. */
+  receipt(hash: Hex): Promise<TxOutcome | null>;
   /** USDT authorizationState(authorizer, nonce). */
   authorizationUsed(from: Address, nonce: Hex): Promise<boolean>;
   /** PaymentRouter.getInvoice(); null when the invoice does not exist on chain (status none). */

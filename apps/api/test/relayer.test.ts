@@ -264,3 +264,48 @@ describe("invoices, refunds", () => {
 test("amount parse helper matches parseUnits", () => {
   expect(parseAmountUsdt("1000.000001").units).toBe(parseUnits("1000.000001", 6));
 });
+
+describe("POST /invoices/:id/sync (self-paid pay())", () => {
+  test("verified on-chain receipt -> payment recorded gasless=false, invoice paid; idempotent", async () => {
+    const s = await setup({ verified: false });
+    const inv = await s.createInvoice();
+    const hash = s.chain.selfPay(inv.invoiceId, s.payerAcct.address);
+    const r = await s.post(`/invoices/${inv.invoiceId}/sync`, { txHash: hash });
+    expect(r.status).toBe(200);
+    const j = (await r.json()) as any;
+    expect(j.state).toBe("paid");
+    expect(j.payment.gasless).toBe(false);
+    expect(j.payment.payer).toBe(s.payerAcct.address);
+    expect((await s.store.getInvoice(inv.invoiceId))!).toMatchObject({ state: "paid", payTx: hash });
+    expect((await s.store.getPayment(inv.invoiceId))!.gasless).toBe(false);
+    const again = (await (await s.post(`/invoices/${inv.invoiceId}/sync`, { txHash: hash })).json()) as any;
+    expect(again.alreadySynced).toBe(true);
+    expect(s.relayer.budget.usedToday(s.merchantAcct.address)).toBe(100_000n * 5_000_000_000n); // only the create tx
+  });
+
+  test("never trusts the client: unknown, reverted, or other-invoice txs are rejected", async () => {
+    const s = await setup();
+    const a = await s.createInvoice();
+    const b = await s.createInvoice();
+    const unknown = ("0x" + "77".repeat(32)) as `0x${string}`;
+    expect(((await (await s.post(`/invoices/${a.invoiceId}/sync`, { txHash: unknown })).json()) as any).code).toBe("TX_NOT_FOUND");
+    const reverted = s.chain.selfPay(a.invoiceId, s.payerAcct.address, { status: "reverted" });
+    expect(((await (await s.post(`/invoices/${a.invoiceId}/sync`, { txHash: reverted })).json()) as any).code).toBe("TX_FAILED");
+    const paysB = s.chain.selfPay(b.invoiceId, s.payerAcct.address);
+    expect(((await (await s.post(`/invoices/${a.invoiceId}/sync`, { txHash: paysB })).json()) as any).code).toBe("BAD_REQUEST");
+    // the invoice-creation tx has no InvoicePaid event
+    expect(((await (await s.post(`/invoices/${a.invoiceId}/sync`, { txHash: a.createTx })).json()) as any).code).toBe("BAD_REQUEST");
+    expect((await s.store.getInvoice(a.invoiceId))!.state).toBe("open");
+    expect(((await (await s.post(`/invoices/${a.invoiceId}/sync`, { txHash: "0x12" })).json()) as any).code).toBe("BAD_REQUEST");
+  });
+
+  test("does not move a refunded invoice backwards", async () => {
+    const s = await setup();
+    const inv = await s.createInvoice();
+    const hash = s.chain.selfPay(inv.invoiceId, s.payerAcct.address);
+    await s.store.upsertInvoice({ ...(await s.store.getInvoice(inv.invoiceId))!, state: "refunded" });
+    const j = (await (await s.post(`/invoices/${inv.invoiceId}/sync`, { txHash: hash })).json()) as any;
+    expect(j.state).toBe("refunded");
+    expect((await s.store.getInvoice(inv.invoiceId))!.state).toBe("refunded");
+  });
+});

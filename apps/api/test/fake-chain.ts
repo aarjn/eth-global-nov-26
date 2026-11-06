@@ -21,6 +21,8 @@ export class FakeChain implements RouterChain {
   revertNext: string | null = null;
   revertOnChain = false;
   private pending = new Map<Hex, RouterCall>();
+  /** Mined receipts by hash: our own sends, plus txs injected by tests (e.g. a payer's self-paid pay()). */
+  mined = new Map<string, TxOutcome>();
   private n = 0;
 
   async simulate(call: RouterCall): Promise<Simulation> {
@@ -40,7 +42,24 @@ export class FakeChain implements RouterChain {
     this.pending.set(h, call);
     return h;
   }
+  async receipt(hash: Hex) { return this.mined.get(hash.toLowerCase()) ?? null; }
   async wait(hash: Hex): Promise<TxOutcome> {
+    const o = await this.waitInner(hash);
+    this.mined.set(hash.toLowerCase(), o);
+    return o;
+  }
+  /** Simulate the payer calling PaymentRouter.pay() themselves; returns the tx hash. */
+  selfPay(invoiceId: Hex, payer: Address, opts: { status?: "success" | "reverted"; eventInvoiceId?: Hex } = {}): Hex {
+    const inv = this.invoices.get(invoiceId.toLowerCase())!;
+    const hash = keccak256(toHex(`selfpay${++this.n}`));
+    if ((opts.status ?? "success") === "success") Object.assign(inv, { status: "paid", payer, balance: inv.amount, paidAt: 1_800_000_100 });
+    this.mined.set(hash.toLowerCase(), {
+      txHash: hash, status: opts.status ?? "success", gasCostWei: 0n, blockNumber: BigInt(this.n), blockTimestamp: 1_800_000_100,
+      events: opts.status === "reverted" ? [] : [{ name: "InvoicePaid", args: { invoiceId: opts.eventInvoiceId ?? invoiceId, payer, amount: inv.amount, gasless: false } }],
+    });
+    return hash;
+  }
+  private async waitInner(hash: Hex): Promise<TxOutcome> {
     const call = this.pending.get(hash)!;
     const base = { txHash: hash, gasCostWei: this.gas * this.gasPrice, blockNumber: BigInt(this.n), blockTimestamp: 1_800_000_000 };
     if (this.revertOnChain) return { ...base, status: "reverted", events: [] };

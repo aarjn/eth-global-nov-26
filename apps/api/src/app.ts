@@ -12,6 +12,7 @@ import { DemoFaucet, DEMO_LABEL } from "./demo";
 import { buildExportCsv } from "./csv";
 import { jsonSafe } from "./typed";
 import { mountPlugins, type PluginContext } from "./plugins";
+import { senderStats, sharedSender } from "./senders";
 
 export interface AppDeps {
   config: ApiConfig;
@@ -47,6 +48,14 @@ export async function createApp(d: AppDeps) {
   const faucet = new DemoFaucet(d.faucet, config, d.now);
   const app = new Hono();
   const ip = (c: Context) => clientIp(c, config.trustProxy);
+  // Rabdi explorer link of an entity, when the Arkiv store (W4) knows its key (duck-typed: explorerUrlFor).
+  const arkivUrl = (kind: "invoice" | "payment" | "merchant", id: string): string | undefined => {
+    try { return (store as { explorerUrlFor?: (k: string, id: string) => string | undefined }).explorerUrlFor?.(kind, id); } catch { return undefined; }
+  };
+  const withArkiv = <T extends object>(kind: "invoice" | "payment" | "merchant", id: string, v: T): T & { arkivUrl?: string } => {
+    const u = arkivUrl(kind, id);
+    return u ? { ...v, arkivUrl: u } : v;
+  };
 
   app.use("*", cors({ origin: config.corsOrigins === "*" ? "*" : config.corsOrigins, allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type"], exposeHeaders: ["Content-Disposition"], maxAge: 600 }));
   app.use("*", bodyLimit({ maxSize: 32 * 1024, onError: (c) => c.json({ error: "body too large", code: "BAD_REQUEST" }, 413) }));
@@ -100,13 +109,17 @@ export async function createApp(d: AppDeps) {
         rateLimits: { payerPerHour: config.limits.payerPerHour, ipPerHour: config.limits.ipPerHour, globalPerHour: config.limits.globalPerHour, globalRemaining: relayer.limits.global.remaining("global") },
       },
       stats: relayer.stats,
+      senders: senderStats(),
       demoFaucet: faucet.enabled ? { label: DEMO_LABEL, address: d.faucet!.address, balanceUsdt: typeof faucetUsdt === "bigint" ? formatUnits(faucetUsdt, USDT_DECIMALS) : faucetUsdt, grants: faucet.grants } : null,
       plugins: mounted,
     });
   });
 
   // ---- invoices ----
-  app.post("/invoices", async (c) => c.json(await relayer.createInvoice(await json(c), ip(c)), 201));
+  app.post("/invoices", async (c) => {
+    const inv = await relayer.createInvoice(await json(c), ip(c));
+    return c.json(withArkiv("invoice", inv.invoiceId, inv), 201);
+  });
 
   app.get("/invoices/:id", async (c) => {
     const id = parseBytes32(c.req.param("id"), "invoice id");
@@ -114,7 +127,10 @@ export async function createApp(d: AppDeps) {
     if (!inv) throw new ApiError("INVOICE_NOT_FOUND", "invoice not found");
     const [m, payment] = await Promise.all([store.getMerchant(inv.merchant), inv.state === "open" ? null : store.getPayment(id)]);
     // Extra fields beyond Invoice for the pay page and receipt page.
-    return c.json({ ...inv, merchantHandle: m?.handle ?? null, gaslessAvailable: !!m?.verified && relayer.hasChain, payment: payment ?? null, paymentRouter: d.chain?.routerAddress ?? null });
+    return c.json(withArkiv("invoice", id, {
+      ...inv, merchantHandle: m?.handle ?? null, gaslessAvailable: !!m?.verified && relayer.hasChain,
+      payment: payment ? withArkiv("payment", id, payment) : null, paymentRouter: d.chain?.routerAddress ?? null,
+    }));
   });
 
   // Public receipt (/r/:id): everything read from Arkiv.
@@ -124,7 +140,8 @@ export async function createApp(d: AppDeps) {
     if (!invoice) throw new ApiError("INVOICE_NOT_FOUND", "invoice not found");
     const [merchant, payment] = await Promise.all([store.getMerchant(invoice.merchant), store.getPayment(id)]);
     return c.json({
-      invoice, payment: payment ?? null, merchant: merchant ?? null,
+      invoice: withArkiv("invoice", id, invoice), payment: payment ? withArkiv("payment", id, payment) : null,
+      merchant: merchant ? withArkiv("merchant", merchant.wallet, merchant) : null,
       links: {
         payTx: payment?.txHash ? relayer.txUrl(payment.txHash) : invoice.payTx ? relayer.txUrl(invoice.payTx) : null,
         refundTx: payment?.refundTx ? relayer.txUrl(payment.refundTx) : null,
@@ -143,10 +160,17 @@ export async function createApp(d: AppDeps) {
     return c.json(jsonSafe({ ...typedData, typedData, deadline: typedData.message.deadline }));
   });
   app.post("/invoices/:id/refund", async (c) => c.json(await relayer.refund(parseBytes32(c.req.param("id"), "invoice id"), await json(c), ip(c))));
+  app.post("/invoices/:id/sync", async (c) => {
+    const r = await relayer.syncPayment(parseBytes32(c.req.param("id"), "invoice id"), await json(c), ip(c));
+    return c.json(withArkiv("invoice", r.invoiceId, r));
+  });
   app.post("/invoices/:id/withdraw", async (c) => c.json(await relayer.withdraw(parseBytes32(c.req.param("id"), "invoice id"), await json(c), ip(c))));
 
   // ---- relay ----
-  app.post("/relay", async (c) => c.json(await relayer.relay(await json(c), ip(c))));
+  app.post("/relay", async (c) => {
+    const r = await relayer.relay(await json(c), ip(c));
+    return c.json(withArkiv("invoice", r.invoiceId, r));
+  });
 
   // ---- merchant extras (W4 owns POST /merchants and GET /merchants/:wallet/invoices) ----
   app.get("/merchants/:wallet/export.csv", async (c) => {
@@ -188,7 +212,7 @@ export async function createApp(d: AppDeps) {
   app.post("/demo/fund", async (c) => c.json(await faucet.fund(await json(c), ip(c))));
 
   // ---- other workstreams' routes ----
-  const ctx: PluginContext = { store, config, relayer, notify: (m, k, id) => relayer.notify(m, k, id) };
+  const ctx: PluginContext = { store, config, relayer, notify: (m, k, id) => relayer.notify(m, k, id), sharedSender };
   const mounted = d.pluginDir === false ? [] : await mountPlugins(app, ctx, d.pluginDir);
 
   return { app, relayer, faucet, mounted };

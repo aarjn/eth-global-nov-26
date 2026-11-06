@@ -13,9 +13,9 @@
 import { Hono, type Context } from "hono";
 import {
   createWalletClient, formatEther, formatUnits, getAddress, isHex, parseEther, parseEventLogs,
-  recoverTypedDataAddress, type Abi, type PublicClient,
+  recoverTypedDataAddress, type Abi,
 } from "viem";
-import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import {
   buildIssueTypedData, DEPLOYMENT, invoiceNoteAbi, NOTE_STATE, paymentRouterAbi, ROUTER_STATUS, USDT_DECIMALS,
   type Address, type Hex, type Invoice, type InvoiceState, type Note,
@@ -25,7 +25,7 @@ import type { ApiConfig } from "../config";
 import { ApiError, bad } from "../errors";
 import { parseAddress, parseAmountUsdt, parseBytes32 } from "../relayer";
 import { SlidingWindowLimiter, consumeAll } from "../ratelimit";
-import { TxQueue } from "../queue";
+import { sharedSender } from "../senders";
 import { jsonSafe } from "../typed";
 import { makeClients, revertReason } from "../viem-chain";
 import { clientIp } from "../app";
@@ -154,27 +154,6 @@ async function json(c: Context): Promise<Record<string, unknown>> {
 // ---------------------------------------------------------------- production chain (viem)
 
 const NOTE_EVENTS = ["NoteIssued", "NoteFunded", "NoteTransferred", "NoteEscrowFunded", "NoteSettled"] as const;
-const NONCE_ERR = /nonce too low|nonce has already been used|replacement transaction underpriced|already known|invalid nonce/i;
-
-/** One wallet, one queue, nonce re-read from the chain per send, retried on nonce races (other API modules may send
- *  from the same key through their own queue). */
-class KeyedSender {
-  private queue = new TxQueue();
-  constructor(readonly account: PrivateKeyAccount, private pub: PublicClient) {}
-  run(build: (nonce: number) => Promise<Hex>): Promise<Hex> {
-    return this.queue.run(async () => {
-      for (let attempt = 0; ; attempt++) {
-        const nonce = await this.pub.getTransactionCount({ address: this.account.address, blockTag: "pending" });
-        try { return await build(nonce); }
-        catch (e) {
-          if (attempt < 2 && NONCE_ERR.test((e as Error)?.message ?? "")) { await Bun.sleep(1500); continue; }
-          throw e;
-        }
-      }
-    });
-  }
-}
-
 export function createViemNoteChain(cfg: ApiConfig): NoteChain | undefined {
   if (!cfg.invoiceNote) return undefined;
   const note = cfg.invoiceNote;
@@ -184,8 +163,9 @@ export function createViemNoteChain(cfg: ApiConfig): NoteChain | undefined {
   const owner = cfg.deployerKey ? privateKeyToAccount(cfg.deployerKey) : undefined;
   const relayerWallet = relayer ? createWalletClient({ account: relayer, chain, transport }) : undefined;
   const ownerWallet = owner ? createWalletClient({ account: owner, chain, transport }) : undefined;
-  const relayerSender = relayer ? new KeyedSender(relayer, pub) : undefined;
-  const ownerSender = owner ? new KeyedSender(owner, pub) : undefined;
+  // Shared per-key queues (src/senders.ts): same queue as the relayer's router txs and /demo/fund (W2).
+  const relayerSender = relayer ? sharedSender(relayer, pub, chain, transport, cfg.rpcUrl) : undefined;
+  const ownerSender = owner ? sharedSender(owner, pub, chain, transport, cfg.rpcUrl) : undefined;
   let routerAddr: Address | undefined;
   const router = async () => (routerAddr ??= (await pub.readContract({ address: note, abi, functionName: "router" })) as Address);
   const fromBlock = BigInt(DEPLOYMENT.deployed && DEPLOYMENT.invoiceNote?.toLowerCase() === note.toLowerCase() && DEPLOYMENT.deployBlock ? DEPLOYMENT.deployBlock : 0);

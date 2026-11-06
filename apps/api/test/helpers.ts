@@ -23,6 +23,7 @@ export async function setup(opts: { verified?: boolean; env?: Record<string, str
   const payerAcct = privateKeyToAccount(generatePrivateKey());
   await store.upsertMerchant({ wallet: merchantAcct.address, handle: "chai-studio", verified: opts.verified ?? true, gasUsedWei: "0", createdAt: 1 });
   const { app, relayer, faucet: demo } = await createApp({ config: testConfig(opts.env), store, chain, faucet, pluginDir: false, now: clock });
+  relayer.syncRetryMs = 0;
   const advance = (ms: number) => { now += ms; };
   const nowSec = () => Math.floor(now / 1000);
 

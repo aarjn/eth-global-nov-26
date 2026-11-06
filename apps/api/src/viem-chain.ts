@@ -1,13 +1,13 @@
 // Production Whitechain access with viem: simulation, the single relayer tx queue, receipts decoded into events.
 import {
-  BaseError, ContractFunctionRevertedError, createPublicClient, createWalletClient, erc20Abi, http, parseAbi, parseEventLogs,
-  type Abi, type PublicClient, type WalletClient,
+  BaseError, ContractFunctionRevertedError, TransactionReceiptNotFoundError, type TransactionReceipt, createPublicClient, erc20Abi, http, parseAbi, parseEventLogs,
+  type Abi, type PublicClient,
 } from "viem";
-import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import { whitechainTestnet, type Address, type Hex } from "@paisalink/shared";
 import { paymentRouterAbi, ROUTER_STATUS } from "@paisalink/shared";
 import type { ApiConfig } from "./config";
-import { TxQueue } from "./queue";
+import { sharedSender } from "./senders";
 import { SimulationError, type FaucetChain, type RouterCall, type RouterChain, type Simulation, type TxOutcome } from "./chain";
 
 const usdtAuthAbi = parseAbi(["function authorizationState(address authorizer, bytes32 nonce) view returns (bool)"]);
@@ -35,28 +35,6 @@ export function revertReason(e: unknown): string {
   return (e as Error)?.message?.split("\n")[0] ?? String(e);
 }
 
-/** One sender wallet with an explicit local nonce, serialised through a promise-chain queue. */
-class Sender {
-  readonly queue = new TxQueue();
-  private nextNonce: number | undefined;
-  constructor(readonly account: PrivateKeyAccount, private pub: PublicClient, readonly wallet: WalletClient) {}
-
-  send(build: (nonce: number) => Promise<Hex>): Promise<Hex> {
-    return this.queue.run(async () => {
-      const chainNonce = await this.pub.getTransactionCount({ address: this.account.address, blockTag: "pending" });
-      const nonce = Math.max(chainNonce, this.nextNonce ?? 0);
-      try {
-        const hash = await build(nonce);
-        this.nextNonce = nonce + 1;
-        return hash;
-      } catch (e) {
-        this.nextNonce = undefined; // resync from the chain on the next send
-        throw e;
-      }
-    });
-  }
-}
-
 export function makeClients(cfg: ApiConfig) {
   const chain = { ...whitechainTestnet, id: cfg.chainId, rpcUrls: { default: { http: [cfg.rpcUrl] } } };
   const transport = http(cfg.rpcUrl, { retryCount: 2, timeout: 20_000 });
@@ -69,8 +47,18 @@ export function createViemRouterChain(cfg: ApiConfig): RouterChain | undefined {
   const router = cfg.paymentRouter;
   const { chain, transport, pub } = makeClients(cfg);
   const account = privateKeyToAccount(cfg.relayerKey);
-  const sender = new Sender(account, pub, createWalletClient({ account, chain, transport }));
+  const sender = sharedSender(account, pub, chain, transport, cfg.rpcUrl);
   const abi = paymentRouterAbi as Abi;
+
+  async function decode(r: TransactionReceipt): Promise<TxOutcome> {
+    const block = await pub.getBlock({ blockNumber: r.blockNumber });
+    // Only logs emitted by OUR PaymentRouter count; a look-alike event from another contract is ignored.
+    const logs = parseEventLogs({ abi, logs: r.logs.filter((l) => l.address.toLowerCase() === router.toLowerCase()) }) as unknown as { eventName: string; args: Record<string, unknown> }[];
+    return {
+      txHash: r.transactionHash, status: r.status, gasCostWei: r.gasUsed * r.effectiveGasPrice, blockNumber: r.blockNumber,
+      blockTimestamp: Number(block.timestamp), events: logs.map((l) => ({ name: l.eventName, args: l.args })),
+    };
+  }
 
   return {
     chainId: cfg.chainId,
@@ -100,13 +88,12 @@ export function createViemRouterChain(cfg: ApiConfig): RouterChain | undefined {
     },
 
     async wait(hash): Promise<TxOutcome> {
-      const r = await pub.waitForTransactionReceipt({ hash, timeout: RECEIPT_TIMEOUT_MS });
-      const block = await pub.getBlock({ blockNumber: r.blockNumber });
-      const logs = parseEventLogs({ abi, logs: r.logs.filter((l) => l.address.toLowerCase() === router.toLowerCase()) }) as unknown as { eventName: string; args: Record<string, unknown> }[];
-      return {
-        txHash: hash, status: r.status, gasCostWei: r.gasUsed * r.effectiveGasPrice, blockNumber: r.blockNumber,
-        blockTimestamp: Number(block.timestamp), events: logs.map((l) => ({ name: l.eventName, args: l.args })),
-      };
+      return decode(await pub.waitForTransactionReceipt({ hash, timeout: RECEIPT_TIMEOUT_MS }));
+    },
+
+    async receipt(hash) {
+      try { return await decode(await pub.getTransactionReceipt({ hash })); }
+      catch (e) { if (e instanceof TransactionReceiptNotFoundError) return null; throw e; }
     },
 
     authorizationUsed: (from, nonce) => pub.readContract({ address: cfg.usdt, abi: usdtAuthAbi, functionName: "authorizationState", args: [from, nonce] }),
@@ -141,7 +128,7 @@ export function createViemFaucetChain(cfg: ApiConfig): FaucetChain | undefined {
   if (!cfg.deployerKey || !cfg.demo.enabled) return undefined;
   const { chain, transport, pub } = makeClients(cfg);
   const account = privateKeyToAccount(cfg.deployerKey);
-  const sender = new Sender(account, pub, createWalletClient({ account, chain, transport }));
+  const sender = sharedSender(account, pub, chain, transport, cfg.rpcUrl);
   return {
     address: account.address,
     usdtBalance: (a: Address) => pub.readContract({ address: cfg.usdt, abi: erc20Abi, functionName: "balanceOf", args: [a] }),

@@ -76,3 +76,24 @@ W2/W4 shipped the shapes; the web now uses: `GET /invoices/:id` (+ `merchantHand
 - **SSE `note` kind:** `PluginContext.notify(merchant, "invoice"|"payment"|"note", id)`. W5 can switch its `notify(..., "invoice", ...)` calls to `"note"` if the dashboard wants to tell them apart (the web refetches on any message, so nothing breaks either way).
 - **`arkivUrl`:** added to `POST /invoices`, `GET /invoices/:id` (and its `payment`), `POST /relay`, and `GET /invoices/:id/receipt` (invoice, payment, merchant) whenever W4's store knows the entity key (`explorerUrlFor`, duck-typed; no `packages/arkiv` change needed).
 - `.env.example`: added `WORLD_ENVIRONMENT=staging`, `WORLD_ALLOW_LEGACY=`, `WORLD_NULLIFIER_FILE=`. Run `bash scripts/load-env.sh` to carry them into `.env.local`.
+
+## S1 findings (test agent S1)
+
+New test files: `contracts/test/Edge.t.sol` (14), `apps/api/test/edge.test.ts` (32), `packages/shared/test/vectors.test.ts` (9, incl. paymentNonce vector from `cast`, EIP-3009/Refund/Withdraw typehash strings, manual EIP-712 digest).
+
+Bugs found: none. All new tests pass against current source. Observations only:
+- `apps/api/src/demo.ts:34` and `routes/notes.ts:491` gate the demo endpoints on `config.demo.enabled` (= `WC_CHAIN_ID == 1874 && DEMO_FAUCET != "0"`). That is the config chain id, not the RPC chain id. `/health` reports `ok:false` on a mismatch, but `/demo/fund` itself does not check `rpcChainId()`. Low risk.
+- `res.text()` on `/merchants/:w/export.csv` strips the UTF-8 BOM (fetch semantics). The bytes do start with EF BB BF. The web client should use `arrayBuffer()` or a Blob if it reads the CSV in JS.
+- World nullifier reuse is already covered by `apps/api/test/world.test.ts` (no duplicate added).
+
+### Command list for the coordinator (`test:all`)
+```
+export PATH=$HOME/.foundry/bin:$PATH
+(cd contracts && forge test)
+(cd contracts && RUN_FORK=1 forge test --match-contract ForkUSDT)
+bun test apps/api
+bun test packages
+(cd apps/web && bun test && bun test ./src/routes/invest && bun run typecheck && bun run build)
+```
+Baseline before S1 -> after: forge 65 pass/1 skip -> 79 pass/1 skip; fork 4 -> 4; api 68 -> 104; packages 38 pass/6 skip -> 47 pass/6 skip; web 16+5 -> 22+5 (other agents' additions); typecheck and build green.
+- **`POST /invoices/:id/sync {txHash}` (self-paid fallback, for W3):** reads the mined receipt (it never waits on an unknown hash: 4 lookups, 1.5 s apart), requires `status == success` and an `InvoicePaid` event for **this** invoiceId emitted by **our** PaymentRouter, then calls `recordPayment` (with `gasless` taken from the event, so `false` for `pay()`), sets the invoice from `open`/`financed` to `paid` with `payTx`, and notifies SSE. Idempotent: the same tx again returns `{alreadySynced: true, payment}`. It sends no tx and spends no gas budget, and it is rate-limited at 120/IP/h. Returns `{invoiceId, txHash, explorerUrl, state, payment, arkivUrl?}`. Errors: `TX_NOT_FOUND` 404 (not mined yet: retry), `TX_FAILED` 502 (reverted), `BAD_REQUEST` (the tx did not pay this invoice), `INVOICE_NOT_FOUND`. It also repairs a relayed payment whose store write failed. Covered by fake-chain tests and by the anvil test (a real `approve` + `pay()` from the payer, then `/sync`).

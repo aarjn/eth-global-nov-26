@@ -10,13 +10,16 @@ import type { Hono } from "hono";
 import type { PaisaStore } from "@paisalink/shared";
 import type { ApiConfig } from "./config";
 import type { Relayer } from "./relayer";
+import { sharedSender } from "./senders";
 
 export interface PluginContext {
   store: PaisaStore;
   config: ApiConfig;
   /** Lets plugins push live updates to dashboards (SSE) after their own store writes. */
-  notify: (merchant: `0x${string}`, kind: "invoice" | "payment", invoiceId: `0x${string}`) => void;
+  notify: (merchant: `0x${string}`, kind: "invoice" | "payment" | "note", id: `0x${string}`) => void;
   relayer: Relayer;
+  /** Shared per-key send queue (src/senders.ts). Use it for every tx from the relayer or deployer key. */
+  sharedSender?: typeof sharedSender;
 }
 
 type Factory = (arg: any) => Hono<any>;

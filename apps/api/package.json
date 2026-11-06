@@ -10,10 +10,13 @@
     "typecheck": "bun node_modules/typescript/lib/tsc.js --noEmit -p ."
   },
   "dependencies": {
+    "@ethersphere/bee-js": "13.2.0",
     "@paisalink/arkiv": "workspace:*",
     "@paisalink/shared": "workspace:*",
     "@worldcoin/idkit-core": "4.6.0",
     "hono": "4.13.16",
+    "pdf-lib": "1.17.1",
+    "qrcode-generator": "2.0.4",
     "viem": "2.57.16"
   },
   "devDependencies": {
