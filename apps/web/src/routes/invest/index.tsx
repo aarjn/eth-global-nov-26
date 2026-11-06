@@ -66,7 +66,9 @@ export default function InvestPage() {
       if (d.allowlistTx) txs.push({ label: "Allowlisted by the demo compliance desk", hash: d.allowlistTx });
       if (d.gasTx) txs.push({ label: "Test WBT for gas", hash: d.gasTx });
       try {
-        const f = await api.post<{ txHash: Hex; amountUsdt: string }>("/demo/fund", { address: investor.address });
+        // ask only for the price of the newest note still for sale (capped by the faucet): test USDT is scarce
+        const forSale = (list ?? []).filter((n) => (n.onchain?.state ?? n.state) === "issued").sort((a, b) => b.noteId - a.noteId)[0];
+        const f = await api.post<{ txHash: Hex; amountUsdt: string }>("/demo/fund", { address: investor.address, amountUsdt: forSale?.priceUsdt });
         txs.push({ label: `${f.amountUsdt} test USDT`, hash: f.txHash });
       } catch (e) {
         if (!(e instanceof ApiError && e.code === "DEMO_FAUCET_LIMIT")) throw e; // already has test USDT: fine

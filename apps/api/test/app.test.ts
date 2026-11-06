@@ -51,6 +51,43 @@ describe("HTTP routes", () => {
     expect(((await sixth.json()) as any).demo).toBe(true);
   });
 
+  test("POST /demo/fund tops up to the requested amountUsdt, capped by DEMO_FUND_USDT", async () => {
+    const s = await setup({ env: { TRUST_PROXY: "1", DEMO_FUND_USDT: "4.9" } });
+    const fund = async (body: Record<string, unknown>) => {
+      const r = await s.post("/demo/fund", body, "7.7.7.7");
+      return { status: r.status, j: (await r.json()) as any };
+    };
+    // asks for less than the cap: gets exactly that (the note price)
+    const investor = privateKeyToAccount(generatePrivateKey()).address;
+    let r = await fund({ address: investor, amountUsdt: "0.95" });
+    expect(r.status).toBe(200);
+    expect(r.j.amountUsdt).toBe("0.95");
+    expect(await s.faucet.usdtBalance(investor)).toBe(950_000n);
+    // asks for more than the cap: gets the cap
+    const greedy = privateKeyToAccount(generatePrivateKey()).address;
+    r = await fund({ address: greedy, amountUsdt: "60" });
+    expect(r.j.amountUsdt).toBe("4.9");
+    expect(await s.faucet.usdtBalance(greedy)).toBe(4_900_000n);
+    // no amount: the cap (default behaviour, configured by DEMO_FUND_USDT)
+    const plain = privateKeyToAccount(generatePrivateKey()).address;
+    r = await fund({ address: plain });
+    expect(r.j.amountUsdt).toBe("4.9");
+    // a wallet that already holds some gets only the shortfall
+    const partial = privateKeyToAccount(generatePrivateKey()).address;
+    s.faucet.balances.set(partial.toLowerCase(), 400_000n);
+    r = await fund({ address: partial, amountUsdt: "1" });
+    expect(r.j.amountUsdt).toBe("0.6");
+    expect(await s.faucet.usdtBalance(partial)).toBe(1_000_000n);
+    // already enough for what it asks: refused, nothing sent
+    const rich = privateKeyToAccount(generatePrivateKey()).address;
+    s.faucet.balances.set(rich.toLowerCase(), 2_000_000n);
+    r = await fund({ address: rich, amountUsdt: "1" });
+    expect(r.j.code).toBe("DEMO_FAUCET_LIMIT");
+    expect(await s.faucet.usdtBalance(rich)).toBe(2_000_000n);
+    // a bad amount is a 400
+    expect((await fund({ address: privateKeyToAccount(generatePrivateKey()).address, amountUsdt: "-1" })).status).toBe(400);
+  });
+
   test("GET /invoices/:id/receipt returns invoice, payment, merchant", async () => {
     const s = await setup();
     const inv = await s.createInvoice();

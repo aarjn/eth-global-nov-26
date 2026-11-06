@@ -83,7 +83,8 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
   const getTestUsdt = async () => {
     setErr(null); setPhase("funding");
     try {
-      await api.post("/demo/fund", { address: payer.address });
+      // ask only for what this invoice needs (the faucet caps it at DEMO_FUND_USDT): test USDT is scarce
+      await api.post("/demo/fund", { address: payer.address, amountUsdt: invoice?.amountUsdt });
       setNotice("Test USDT is on its way to your demo wallet…");
       for (let i = 0; i < 30; i++) {
         const b = await refreshBalance();
