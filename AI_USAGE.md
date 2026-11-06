@@ -132,6 +132,8 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | `scripts/pool-usdt.ts` | Opus (W8) | Moves test USDT with signed transfers |
 | `docs/live-run.md` | Sonnet (S4), run 3 section by Opus (R1) | Live run evidence: tx hashes, Arkiv entities, balances |
 | `apps/web/e2e/record/*`, `scripts/mux-video.sh`, `recordings/README.txt` | Opus (R1) | Demo footage recorder and the audio/video joiner. Clips in `recordings/` are not committed |
+| `apps/web/e2e/record/record-demo.ts`, `scripts/mux-video.sh`, the run 3 section of `docs/live-run.md` | Opus 5.5 (R1) | Demo recorder, audio/video joiner and run 3 evidence |
+| `README.md`, `docs/submission.md`, `arkiv/reach.md`, `AI_USAGE.md` (final pass: run 3 hashes, test counts, no-public-URL wording) | Sonnet 5.5 (S6) | Test suites re-run on 7 Nov 2026; hashes checked with `cast receipt` |
 | `docs/owner-todo.md`, the live evidence and amounts in `README.md`, `docs/submission.md`, `docs/demo-script.md` | Sonnet (S5) | Filled from `contracts/deployments/1874.json`, `docs/live-run.md` and on-chain receipts |
 
 ## Code Garage items used

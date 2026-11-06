@@ -10,7 +10,7 @@ PaisaLink
 
 - Repo: <https://github.com/aarjn/eth-global-nov-26>
 - Demo video: `TODO(owner): video URL` (about 3:00, 1080p, the builder's own voice)
-- Live app: `PENDING(url)` (the demo stack is on a private Tailscale address; publish a public URL first)
+- Live app: no public hosted URL. The app runs locally (see Setup in the README). The demo video shows the live testnet flow.
 - Contracts: PaymentRouter `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005` ([explorer](https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005?tab=contract)), InvoiceNote `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7` ([explorer](https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7?tab=contract))
 - Arkiv writer wallet: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`
 - Arkiv entity example: <https://rabdi.explorer.arkiv.network/entity/0x2a687bca3e74ad2e7155e364a2bda5c7381b233df9fafd49357317c75f4ce648>
@@ -35,7 +35,7 @@ Everything shown runs on testnets. Test shortcuts are labelled in the UI and lis
 
 ## How it's made
 
-- **Contracts (Foundry, Solidity 0.8.28):** `PaymentRouter` takes USDT through `receiveWithAuthorization`. The signature nonce is bound to the invoice, so it can't be redirected to another invoice. `InvoiceNote` has an allowlist, a maturity lock and settlement in USDT. 79 unit and fuzz tests plus 4 fork tests against the real USDT.
+- **Contracts (Foundry, Solidity 0.8.28):** `PaymentRouter` takes USDT through `receiveWithAuthorization`. The signature nonce is bound to the invoice, so it can't be redirected to another invoice. `InvoiceNote` has an allowlist, a maturity lock and settlement in USDT. 79 unit and fuzz tests plus 5 fork tests against the real USDT.
 - **API and relayer (Hono on bun, viem):** simulates every relay first, then applies a World ID gate, a per-merchant daily gas budget of 0.02 WBT and rate limits per payer, IP and globally.
 - **Web (Vite, React 19, Tailwind v4):** merchant dashboard, payer page, public receipt, investor page and onboarding. The widget is a small React component and an `embed.js` loader.
 - **Data (Arkiv, `@arkiv-network/sdk` 1.0.1):** the only database. Four entity types, per-type expiry, owner-filtered reads, atomic batches, `extendEntity` leases and `watchEntityEvents` for live updates.

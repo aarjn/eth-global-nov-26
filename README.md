@@ -5,7 +5,7 @@
 Built solo by [@aarjn](https://github.com/aarjn) for ETHGlobal Mumbai 2026 (Classic track). Sponsors: Whitechain, Arkiv, World. Everything runs on testnets. No real money is involved.
 
 - Demo video (3 min): `TODO(owner): video URL` (after the owner uploads it)
-- Live app: `PENDING(url)` (the demo stack runs on a private Tailscale address, `http://100.125.124.63`, which judges can't open; the coordinator must publish a public URL)
+- Live app: no public hosted URL. The app runs locally (see Setup). The demo video shows the live testnet flow.
 - Submission text: [`docs/submission.md`](docs/submission.md)
 - Demo narration and shot list: [`docs/demo-script.md`](docs/demo-script.md)
 
@@ -46,18 +46,18 @@ Paying in a stablecoin fixes the cost and the wait. It creates new problems. The
 
 ## Screenshots
 
-Captured by the live Playwright runs and saved in `apps/web/e2e/screenshots/`. Rows marked `PENDING(run3)` come from the recording run that is still in progress.
+Captured by the live Playwright runs and saved in `apps/web/e2e/screenshots/`. Run 3 (the recording run, 7 Nov 2026) evidence is in [`docs/live-run.md`](docs/live-run.md); rows that have no saved image point to the explorer or Arkiv entity instead.
 
 | # | Screen | File |
 |---|---|---|
 | 1 | Merchant dashboard with a paid invoice and live update | `apps/web/e2e/screenshots/desktop-live-4-dashboard-paid.png` |
 | 2 | Payer's phone: `/pay/<id>`, "Paid" state, no chain name | `apps/web/e2e/screenshots/desktop-live-2-paid.png` |
-| 3 | Explorer page of the gasless USDT payment tx | `PENDING(run3)` |
+| 3 | Explorer page of the gasless USDT payment tx | [run 3 pay tx](https://explorer.testnet.whitechain.io/tx/0x0f89c838aacf418f6b020e4b58e5dca368109d53bf716a5463b493af89a3bf75) |
 | 4 | Refund dialog and refund tx | `apps/web/e2e/screenshots/desktop-live-5-refund.png` |
-| 5 | CSV opened in a spreadsheet | `PENDING(run3)` |
+| 5 | CSV opened in a spreadsheet | shown in the demo video (chapter 5) |
 | 6 | Public receipt `/r/<id>` with "Open PDF on Swarm" | `apps/web/e2e/screenshots/desktop-live-7-swarm.png` |
-| 7 | The invoice entity on the Rabdi explorer | `PENDING(run3)` |
-| 8 | `/invest`: note funded, then "transfer after maturity" revert | `PENDING(run3)` |
+| 7 | The invoice entity on the Rabdi explorer | invoice A entity link in [`docs/live-run.md`](docs/live-run.md) (Arkiv entities) |
+| 8 | `/invest`: note funded, then "transfer after maturity" revert | shown in the demo video (chapter 8); `MaturityPassed` revert shown in the UI |
 | 9 | `/onboard`: World ID success badge, and the locked banner after cancel | `apps/web/e2e/screenshots/world-success.png`, `apps/web/e2e/screenshots/world-cancel.png` |
 | 10 | `/demo-store` next to its 19-line source | `apps/web/e2e/screenshots/desktop-demo-store.png` |
 
@@ -288,14 +288,24 @@ Deployer / owner: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. Relayer / operat
 |---|---|---|
 | Deploy PaymentRouter | `0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf` | [tx](https://explorer.testnet.whitechain.io/tx/0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf) |
 | Deploy InvoiceNote | `0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf` | [tx](https://explorer.testnet.whitechain.io/tx/0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf) |
-| Gasless USDT payment (`payWithAuthorization`, payer paid no gas), 1.00 USDT, the first one | `0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e` | [tx](https://explorer.testnet.whitechain.io/tx/0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e) |
+| **Run 3 (full lifecycle, recording run)** | | |
+| Invoice A create, 1.00 USDT | `0xcd2f292049c0d1413d33cbc650eda19480fcce9db1d0bc8eb38132a749413721` | [tx](https://explorer.testnet.whitechain.io/tx/0xcd2f292049c0d1413d33cbc650eda19480fcce9db1d0bc8eb38132a749413721) |
+| Gasless USDT payment (`payWithAuthorization`, payer paid no gas), 1.00 USDT | `0x0f89c838aacf418f6b020e4b58e5dca368109d53bf716a5463b493af89a3bf75` | [tx](https://explorer.testnet.whitechain.io/tx/0x0f89c838aacf418f6b020e4b58e5dca368109d53bf716a5463b493af89a3bf75) |
+| Partial refund, 0.20 USDT | `0x97f679d331148c9b9c90975eb161e774e97fb1f02c2f2d0eb905d15a44a0eb8f` | [tx](https://explorer.testnet.whitechain.io/tx/0x97f679d331148c9b9c90975eb161e774e97fb1f02c2f2d0eb905d15a44a0eb8f) |
+| Invoice B create, 0.50 USDT | `0x886b77138697a53dcd6433369a625b19d216f6380a1e3d93b6cb15e9cc13fe74` | [tx](https://explorer.testnet.whitechain.io/tx/0x886b77138697a53dcd6433369a625b19d216f6380a1e3d93b6cb15e9cc13fe74) |
+| Note issued (`issueWithSig`), note #2, face 0.50, price 0.45 | `0x036643ed5c9d83bbb053f60100adbf7756681580e31326e91e6cdcf10b567961` | [tx](https://explorer.testnet.whitechain.io/tx/0x036643ed5c9d83bbb053f60100adbf7756681580e31326e91e6cdcf10b567961) |
+| Investor allowlisted | `0x2c0fd232c95bbe9cee83877318be3d3d1f8f10e6da9f9575ba7553531f15ebb6` | [tx](https://explorer.testnet.whitechain.io/tx/0x2c0fd232c95bbe9cee83877318be3d3d1f8f10e6da9f9575ba7553531f15ebb6) |
+| Note funded by the investor (`fund`), 0.45 USDT to the merchant | `0xaa8ffc9cc5ca53cd368b149ea0d75ede6e8fcfb0e76a01a1965b39e5f7f52636` | [tx](https://explorer.testnet.whitechain.io/tx/0xaa8ffc9cc5ca53cd368b149ea0d75ede6e8fcfb0e76a01a1965b39e5f7f52636) |
+| Payment forwarded to note escrow (gasless pay of invoice B, 0.50 USDT) | `0xfff0ea707fe1e2dbda5aaaf4afb3b1b000f4d0db3cdb70fdd5a29abb6102daf8` | [tx](https://explorer.testnet.whitechain.io/tx/0xfff0ea707fe1e2dbda5aaaf4afb3b1b000f4d0db3cdb70fdd5a29abb6102daf8) |
+| Transfer after maturity (reverts with `MaturityPassed`; shown as a failed simulation in the UI) | none (the call reverts before it is sent) | `MaturityPassed` revert shown in the UI (no tx, no screenshot file) |
+| Note settled in USDT (`settle`), holder receives 0.50 USDT | `0x5f203b7f7be1e072ba58f189ea2165d07de1944e1fc26e81e3be4fa83d3251a0` | [tx](https://explorer.testnet.whitechain.io/tx/0x5f203b7f7be1e072ba58f189ea2165d07de1944e1fc26e81e3be4fa83d3251a0) |
+| **Extra evidence: earlier runs** | | |
+| Gasless USDT payment, 1.00 USDT, the first one | `0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e` | [tx](https://explorer.testnet.whitechain.io/tx/0x07c94ba03059287729b65b5eb35f76bd6787687d672ec4bc1b881abe1e5ac36e) |
 | Gasless USDT payment, 4.90 USDT (live run 2) | `0x9957efd2d6d04ac8301c00990182dc0502c2899f0b58171b2c9cfa011f5c0c33` | [tx](https://explorer.testnet.whitechain.io/tx/0x9957efd2d6d04ac8301c00990182dc0502c2899f0b58171b2c9cfa011f5c0c33) |
 | Partial refund (`refundWithSig`), 0.90 USDT (live run 2) | `0x0405f8d08472299c173a757d0ab59eb6d06b93ecb1b1491e71d8f9d2fb3c5335` | [tx](https://explorer.testnet.whitechain.io/tx/0x0405f8d08472299c173a757d0ab59eb6d06b93ecb1b1491e71d8f9d2fb3c5335) |
-| Note issued (`issueWithSig`), note #1, face 1.00, price 0.95 (live run 2) | `0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea` | [tx](https://explorer.testnet.whitechain.io/tx/0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea) |
-| Note funded by the investor (`fund`) | `PENDING(run3)` | `PENDING(run3)` |
-| Payment forwarded to note escrow | `PENDING(run3)` | `PENDING(run3)` |
-| Note settled in USDT (`settle`) | `PENDING(run3)` | `PENDING(run3)` |
-| Transfer after maturity (reverts with `MaturityPassed`; shown as a failed simulation in the UI) | none (the call reverts before it is sent) | `PENDING(run3)` (screenshot) |
+| Note issued, note #1, face 1.00, price 0.95 (live run 2) | `0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea` | [tx](https://explorer.testnet.whitechain.io/tx/0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea) |
+
+All run 3 hashes were checked with `cast receipt` (status 1). Full list, with the Arkiv entities and Swarm PDF: [`docs/live-run.md`](docs/live-run.md).
 
 ## Arkiv: writer wallet and a runnable query
 
@@ -334,27 +344,27 @@ Judge files: [`arkiv/schema.md`](arkiv/schema.md), [`arkiv/friction.md`](arkiv/f
 
 ## Tests
 
-Run on 6 Nov 2026 from a clean tree. The command list is the one in [`docs/handoffs.md`](docs/handoffs.md) ("S1 findings").
+Run on 7 Nov 2026. The command list is the one in [`docs/handoffs.md`](docs/handoffs.md) ("S1 findings").
 
 ```bash
 export PATH=$HOME/.foundry/bin:$PATH
 (cd contracts && forge test)                                         # 79 passed, 1 skipped
-(cd contracts && RUN_FORK=1 forge test --match-contract ForkUSDT)    # 4 passed (real USDT on a fork of chain 1874)
-bun test apps/api                                                    # 126 pass, 1 skip (live Swarm test), 0 fail
-bun test packages                                                    # 47 pass, 6 skip (live Arkiv tests), 0 fail
+(cd contracts && RUN_FORK=1 forge test --match-contract ForkUSDT)    # 5 passed (real USDT on a fork of chain 1874)
+bun test apps/api                                                    # 127 pass, 1 skip (live Swarm test), 0 fail
+bun test packages                                                    # 47 pass, 6 skip (live Arkiv tests: arkiv 37 + shared 10; widget has no tests), 0 fail
 (cd apps/web && bun test && bun run typecheck && bun run build)     # 26 pass, typecheck and build green
 ```
 
 | Suite | Result |
 |---|---|
 | Foundry unit and fuzz tests (`contracts/test`) | 79 passed, 1 skipped |
-| Foundry fork tests against the real USDT | 4 passed |
-| API tests (`apps/api/test`, includes anvil integration tests of the real compiled contracts) | 126 pass, 1 skip |
+| Foundry fork tests against the real USDT | 5 passed |
+| API tests (`apps/api/test`, includes anvil integration tests of the real compiled contracts) | 127 pass, 1 skip |
 | Package tests (`packages/arkiv`, `packages/shared`) | 47 pass, 6 skip |
 | Web tests (`apps/web`, includes `/invest` and `/onboard`) | 26 pass |
-| **Total** | **282 pass, 8 skip, 0 fail** |
+| **Total** | **284 pass, 8 skip, 0 fail** |
 
-Skipped tests need live services: a live Swarm upload (`SWARM_LIVE=1`) and live Arkiv writes (they need a funded writer and an access key). Counts will change as tests are added. `PENDING(final)`: the coordinator re-runs the suites after the final commit and updates these numbers.
+Skipped tests need live services: a live Swarm upload (`SWARM_LIVE=1`) and live Arkiv writes (they need a funded writer and an access key). Counts will change as tests are added.
 
 ## Current limitations
 

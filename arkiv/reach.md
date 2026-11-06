@@ -20,7 +20,7 @@ Criterion: *Who is it for, and would they use it? Can they try it today, and wil
 ## Can they try it today?
 
 - **Yes, on testnet.** The app runs on Whitechain Sepolia, Arkiv Rabdi and World ID staging. No real money is involved.
-- Live app: `TODO(live): public web URL`. Open `/merchant` to create an invoice, then open the link on a phone.
+- Live app: No public hosted URL; the app runs locally (see Setup in the README) and the demo video shows the live testnet flow. Run it, open `/merchant` to create an invoice, then open the link on a phone.
 - **Judges can reproduce it from the repo** in a few commands (README, "Setup from a clean machine").
 - **A judge can query the data without us.** `bun run scripts/query.ts` reads our entities straight from Arkiv:
 
