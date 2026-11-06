@@ -197,3 +197,9 @@ bash script/verify.sh                                       # Blockscout verific
 forge script script/FirstPayment.s.sol --rpc-url whitechain_testnet --broadcast   # relayer WBT + payer (or deployer) USDT
 cd .. && bun run gen:abi                                    # regenerate packages/shared/src/abi after any change
 ```
+
+### Deployed (Whitechain testnet 1874, block 12343606, verified on Blockscout)
+
+- PaymentRouter `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005`: https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005
+- InvoiceNote `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7`: https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7
+- Tx hashes: `contracts/deployments/1874.json`. Import with `requireAddresses()` from `packages/shared/src/addresses.ts`.

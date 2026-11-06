@@ -1,11 +1,21 @@
 {
   "chainId": 1874,
-  "deployed": false,
+  "deployed": true,
   "usdt": "0xcedfB56113143d55b2358b8CFbB0dEB5Ad2f55a7",
   "owner": "0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb",
   "operator": "0x645bDbd12f7EC7cf773b0C13Dce941057057DA8F",
-  "paymentRouter": null,
-  "invoiceNote": null,
-  "deployBlock": null,
-  "txs": {}
+  "paymentRouter": "0x97613d5bE2c3dd747c110b460Ff2e0FC69701005",
+  "invoiceNote": "0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7",
+  "deployBlock": 12343606,
+  "txs": {
+    "paymentRouter": "0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf",
+    "invoiceNote": "0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf",
+    "setNoteContract": "0x8d749642709dfb7b4b84eadaca387956b833d6bb6da9910b8f7931a4ed8ba9ce",
+    "setAllowed:0xe7CfE30ED69450427FFf6bbBe143E5da71E4AF87": "0xd178ea3ede8cd9ac5882e53e9bb526a74e1f82f815222c71b5b233f63c739718",
+    "setAllowed:0x32c84603C9848FFa470FB07C9bCe820944D04c52": "0xbb479dda00133e44aa6a674beb44d3951a505aa1ce342ec0a4b77eafb67f8614"
+  },
+  "explorer": {
+    "paymentRouter": "https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005",
+    "invoiceNote": "https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7"
+  }
 }

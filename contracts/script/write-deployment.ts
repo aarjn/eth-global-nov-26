@@ -7,6 +7,8 @@ const broadcast = await Bun.file(join(dir, "broadcast/Deploy.s.sol/1874/run-late
 const txs: Record<string, string> = {};
 const addr: Record<string, string> = {};
 let deployBlock: number | null = null;
+const cast = `${process.env.HOME}/.foundry/bin/cast`;
+const checksum = (a: string) => Bun.spawnSync([cast, "to-check-sum-address", a]).stdout.toString().trim();
 
 broadcast.transactions.forEach((t: any, i: number) => {
   const receipt = broadcast.receipts.find((r: any) => r.transactionHash === t.hash);
@@ -14,7 +16,7 @@ broadcast.transactions.forEach((t: any, i: number) => {
   const block = Number(receipt.blockNumber);
   if (t.transactionType === "CREATE") {
     const key = t.contractName === "PaymentRouter" ? "paymentRouter" : t.contractName === "InvoiceNote" ? "invoiceNote" : t.contractName;
-    addr[key] = t.contractAddress;
+    addr[key] = checksum(t.contractAddress);
     txs[key] = t.hash;
     if (key === "paymentRouter") deployBlock = block;
   } else {

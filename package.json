@@ -8,7 +8,7 @@
     "dev:api": "bun --cwd apps/api run dev",
     "dev:web": "bun --cwd apps/web run dev",
     "gen:abi": "bun scripts/gen-abi.ts",
-    "test:contracts": "cd contracts && forge test",
+    "test:contracts": "cd contracts && PATH=$HOME/.foundry/bin:$PATH forge test",
     "test:all": "bun run test:contracts && bun test"
   }
 }
