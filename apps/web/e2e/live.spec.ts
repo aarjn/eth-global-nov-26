@@ -68,7 +68,9 @@ async function payInvoice(page: Page, url: string, info: Parameters<typeof shot>
   await expect(page.getByTestId("amount")).toBeVisible();
   // fresh demo payer is empty: "Get test USDT" appears instead of the pay button
   const get = page.getByRole("button", { name: "Get test USDT" });
-  if (await get.isVisible({ timeout: 8000 }).catch(() => false)) {
+  // Wait for the payer balance to load ("Balance: …" -> "Balance: 0.00 USDT") before deciding whether to fund.
+  await expect(page.getByText(/Balance: \d/)).toBeVisible({ timeout: 60_000 });
+  if (await get.isVisible()) {
     await get.click();
     await expect(page.getByTestId("pay-button")).toBeEnabled({ timeout: 90_000 });
   }

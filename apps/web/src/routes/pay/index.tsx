@@ -66,7 +66,14 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
   const refreshBalance = useCallback(async () => {
     try { const b = await usdtBalance(payer.address); setBalance(b); return b; } catch { return null; }
   }, [payer.address]);
-  useEffect(() => { setBalance(null); void refreshBalance(); }, [refreshBalance]);
+  // Retry until the first balance read succeeds: a slow or failed RPC call must not leave the page stuck on "…".
+  useEffect(() => {
+    setBalance(null);
+    let stop = false;
+    const tick = async () => { if (!stop && (await refreshBalance()) === null) setTimeout(tick, 3000); };
+    void tick();
+    return () => { stop = true; };
+  }, [refreshBalance]);
 
   // Someone else may pay the same link (or the relay confirmed): keep the invoice fresh.
   useEffect(() => {
