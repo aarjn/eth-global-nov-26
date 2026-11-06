@@ -12,6 +12,7 @@ import { discount, type NoteRow } from "./lib";
 
 const MATURITIES = [
   { sec: 120, label: "2 minutes (demo)" },
+  { sec: 300, label: "5 minutes (demo)" },
   { sec: 30 * 86400, label: "30 days" },
   { sec: 60 * 86400, label: "60 days" },
   { sec: 90 * 86400, label: "90 days" },
@@ -89,7 +90,7 @@ export function SellInvoice({ invoiceId, existing, onIssued }: { invoiceId: Hex;
         <StateBadge state={inv.state} />
       </div>
 
-      {existing ? <div className="mt-4"><Alert tone="brand">This invoice is already listed as note #{existing.noteId} ({existing.state}). See it below.</Alert></div>
+      {existing && !done ? <div className="mt-4"><Alert tone="brand">This invoice is already listed as note #{existing.noteId} ({existing.state}). See it below.</Alert></div>
         : done ? <div className="mt-4 space-y-2">
           <Alert tone="brand"><b>Listed as note #{done.note.noteId}.</b> An approved investor can buy it now; you receive {money(done.note.priceUsdt)} USDT the moment they do.
             The PaisaLink relayer paid the gas.</Alert>

@@ -169,11 +169,12 @@ test.describe("live flow", () => {
   });
 
   test("8. finance invoice B: sell, investor funds, customer pays into escrow", async ({ page, browser }, info) => {
+    test.setTimeout(14 * 60_000); // 5-minute demo maturity plus funding, escrow pay and settle
     const r = await createInvoice(page, AMOUNT_B, memoB);
     invoiceB = r.id;
     await page.goto(`/invest?invoice=${invoiceB}`);
     await expect(page.getByTestId("sell-summary")).toBeVisible();
-    await page.locator("select").selectOption({ label: "2 minutes (demo)" });
+    await page.locator("select").selectOption({ label: "5 minutes (demo)" });
     // the sell UI takes a price (default 97.5% of face); set it to 0.95 for face 1.00
     await page.getByLabel("Face value (USDT)").fill(AMOUNT_B);
     await page.getByLabel("Price (USDT)").fill(PRICE_B);
