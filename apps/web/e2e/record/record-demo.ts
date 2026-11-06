@@ -2,8 +2,10 @@
 // Run from apps/web (needs the verified demo merchant key from .env.local; it is never printed):
 //   bun --env-file=../../.env.local e2e/record/record-demo.ts            # all chapters
 //   bun --env-file=../../.env.local e2e/record/record-demo.ts ch10 ch05  # only these (no-spend chapters)
-// Output: ../../recordings/chNN.mp4 (H.264 1080p30). Raw webm in ../../recordings/raw/. Tx + entity log in
-// ../../recordings/run-log.json. Never record a trace here: it would capture the merchant key from addInitScript.
+// Output (REC_OUT, default ../../recordings/v2-src): chNN.mp4 (H.264 1080p30), raw/<part>.webm, marks.json (event
+// times per part, for scripts/cut-v2.sh), run-log.json (tx + entity links). Never record a trace here: it would
+// capture the merchant key from addInitScript.
+// Target app: E2E_BASE_URL (default the hosted https://paisalink.tailcdec7a.ts.net), API = E2E_API_URL or <base>/api.
 // Budget (test USDT from the demo faucet): payer A 1.00 + investor 0.45 + payer B 0.50 = 1.95.
 import { chromium, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
@@ -11,9 +13,9 @@ import { mkdir, writeFile, rename, readFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { $ } from "bun";
 
-const BASE = process.env.E2E_BASE_URL || "http://100.125.124.63:5173";
-const API = process.env.E2E_API_URL || "http://100.125.124.63:8787";
-const OUT = resolve(import.meta.dir, "../../../../recordings");
+const BASE = (process.env.E2E_BASE_URL || "https://paisalink.tailcdec7a.ts.net").replace(/\/+$/, "");
+const API = (process.env.E2E_API_URL || `${BASE}/api`).replace(/\/+$/, "");
+const OUT = resolve(process.env.REC_OUT || resolve(import.meta.dir, "../../../../recordings/v2-src"));
 const RAW = join(OUT, "raw");
 const DEMO_MERCHANT = "0xC038827b4E362B0de1Be859377508613CD028946";
 const MERCHANT_SLOT = "paisalink.demo-wallet.merchant";
@@ -28,6 +30,17 @@ const only = process.argv.slice(2);
 const want = (ch: string) => (only.length === 0 && !ch.includes("-")) || only.includes(ch); // "-tail" chapters: only on request
 const log = (...a: unknown[]) => console.log(`[rec ${new Date().toISOString().slice(11, 19)}]`, ...a);
 const pause = (p: Page, ms = 1800) => p.waitForTimeout(ms);
+
+// Event marks: seconds since the page (and its video) started. finish() files them under the part name, with the
+// wall-clock length, so the cut step can line them up with the webm (aligned at the end of the video).
+const pageStart = new WeakMap<Page, number>();
+const pending = new WeakMap<Page, { label: string; t: number }[]>();
+const marks: Record<string, { mobile: boolean; wallSec: number; marks: { label: string; t: number }[] }> = {};
+function mark(p: Page, label: string) {
+  const t = (Date.now() - (pageStart.get(p) ?? Date.now())) / 1000;
+  pending.get(p)?.push({ label, t });
+  log(`  mark ${label} @ ${t.toFixed(2)} s`);
+}
 
 type Found = { chapter: string; label: string; href: string };
 const found: Found[] = [];
@@ -69,11 +82,16 @@ async function context(browser: Browser, opts: { mobile?: boolean; merchant?: bo
     // TEST-ONLY: the verified demo merchant's key into the app's "testnet demo wallet" slot (same as e2e/live.spec.ts).
     await ctx.addInitScript(([slot, key]) => { window.localStorage.setItem(slot, key); }, [MERCHANT_SLOT, merchantKey()] as const);
   }
-  return { ctx, page: await ctx.newPage() };
+  const t0 = Date.now();
+  const page = await ctx.newPage();
+  pageStart.set(page, t0); pending.set(page, []);
+  return { ctx, page };
 }
 /** Close the context (flushes the video) and move the webm to raw/<name>.webm. */
 async function finish(c: { ctx: BrowserContext; page: Page }, name: string) {
   const v = c.page.video();
+  const vp = c.page.viewportSize();
+  marks[name] = { mobile: (vp?.width ?? 1000) < 600, wallSec: (Date.now() - (pageStart.get(c.page) ?? Date.now())) / 1000, marks: pending.get(c.page) ?? [] };
   await c.ctx.close();
   const dst = join(RAW, `${name}.webm`);
   if (v) await rename(await v.path(), dst);
@@ -105,13 +123,17 @@ async function encode(parts: { file: string; mobile: boolean }[], out: string) {
 async function createInvoice(page: Page, amount: string, memo: string) {
   await page.goto("/merchant");
   await expect(page.getByLabel("Amount in USDT")).toBeVisible({ timeout: 30_000 });
+  mark(page, "ready");
   await pause(page, 1500);
   await page.getByLabel("Amount in USDT").fill(amount);
   await page.getByPlaceholder("Logo design, 2 revisions").fill(memo);
+  mark(page, "filled");
   await pause(page, 800);
   await page.getByRole("button", { name: "Create payment link" }).click();
+  mark(page, "createClick");
   const link = page.getByTestId("pay-link");
   await expect(link).toBeVisible({ timeout: 90_000 });
+  mark(page, "link");
   const url = (await link.textContent())!.trim();
   await link.scrollIntoViewIfNeeded();
   return { url, id: url.split("/pay/")[1] };
@@ -120,17 +142,23 @@ async function createInvoice(page: Page, amount: string, memo: string) {
 async function payOnPhone(page: Page, url: string) {
   await page.goto(url);
   await expect(page.getByTestId("amount")).toBeVisible({ timeout: 30_000 });
+  mark(page, "page");
   await expect(page.getByText(/Balance: \d/)).toBeVisible({ timeout: 60_000 });
+  mark(page, "balance");
   await pause(page, 1500);
   const get = page.getByRole("button", { name: "Get test USDT" });
   if (await get.isVisible()) {
     await get.click();
+    mark(page, "fundClick");
     await expect(page.getByTestId("pay-button")).toBeEnabled({ timeout: 90_000 });
+    mark(page, "funded");
     await pause(page, 1500);
   }
   await page.getByTestId("pay-button").click();
+  mark(page, "payClick");
   await expect(page.getByTestId("paid")).toBeVisible({ timeout: 120_000 });
-  await pause(page, 3000);
+  mark(page, "paid");
+  await pause(page, 3500);
 }
 
 function noteCard(page: Page, noteId: number) {
@@ -141,6 +169,7 @@ async function main() {
   await mkdir(RAW, { recursive: true });
   const prev = await readFile(join(OUT, "run-state.json"), "utf8").then(JSON.parse).catch(() => ({}));
   Object.assign(state, prev);
+  Object.assign(marks, await readFile(join(OUT, "marks.json"), "utf8").then(JSON.parse).catch(() => ({}))); // re-runs keep other parts
   const h = await api("GET", "/health");
   log("faucet USDT before:", h.body?.demoFaucet?.balanceUsdt, "api ok:", h.body?.ok);
   merchantKey();
@@ -148,7 +177,8 @@ async function main() {
   const clips: Record<string, { file: string; mobile: boolean }[]> = {};
   const save = async () => {
     await writeFile(join(OUT, "run-state.json"), JSON.stringify(state, null, 2));
-    await writeFile(join(OUT, "run-log.json"), JSON.stringify({ run, state, found }, null, 2));
+    await writeFile(join(OUT, "run-log.json"), JSON.stringify({ run, base: BASE, state, found }, null, 2));
+    await writeFile(join(OUT, "marks.json"), JSON.stringify(marks, null, 2));
   };
   const chapter = async (name: string, fn: () => Promise<void>) => {
     if (!want(name)) return;
@@ -182,6 +212,7 @@ async function main() {
       try {
         await d.page.goto(`https://explorer.testnet.whitechain.io/tx/${state.payTxA}`, { timeout: 60_000 });
         await d.page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
+        mark(d.page, "explorer");
         await pause(d.page, 4000);
         await d.page.mouse.wheel(0, 350);
         await pause(d.page, 4000);
@@ -195,12 +226,16 @@ async function main() {
         const row = c.page.getByTestId("invoice-row").filter({ hasText: memoA });
         await expect(row).toHaveAttribute("data-state", "paid", { timeout: 60_000 });
         await row.scrollIntoViewIfNeeded();
+        mark(c.page, "paidRow");
         await pause(c.page, 2500);
         await row.getByRole("button", { name: "Refund", exact: true }).click();
         await row.getByLabel("Refund amount").fill(REFUND_A);
+        mark(c.page, "refundOpen");
         await pause(c.page, 800);
         await row.getByRole("button", { name: /^Refund 0\.2/ }).click();
+        mark(c.page, "refundClick");
         await expect(row.getByText(/Refunded/)).toBeVisible({ timeout: 90_000 });
+        mark(c.page, "refunded");
         const rl = row.getByRole("link", { name: "Refund transaction" });
         await expect(rl).toBeVisible();
         await rl.hover();
@@ -211,6 +246,7 @@ async function main() {
     });
 
     await chapter("ch05", async () => {
+      let csvPart: { file: string; mobile: boolean } | null = null;
       const c = await context(browser, { merchant: true });
       try {
         await c.page.goto("/merchant");
@@ -219,23 +255,37 @@ async function main() {
         const exp = c.page.getByRole("link", { name: "Export CSV" });
         await exp.hover();
         await pause(c.page, 800);
+        mark(c.page, "exportHover");
         const [dl] = await Promise.all([c.page.waitForEvent("download"), exp.click()]);
+        mark(c.page, "exportClick");
         const text = (await readFile((await dl.path())!, "utf8")).replace(/^﻿/, "");
         const name = dl.suggestedFilename();
         await pause(c.page, 1200);
         // Show the downloaded file itself (the real CSV bytes, rendered as a table), like opening it in a spreadsheet.
         const rows = text.trim().split("\n").map((l) => l.match(/("([^"]|"")*"|[^,]*)(,|$)/g)!.map((x) => x.replace(/,$/, "").replace(/^"|"$/g, "").replace(/""/g, '"')).filter((_, i, a) => i < a.length - 1 || a[i] !== ""));
         const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-        await c.page.setContent(`<html><body style="margin:0;font:13px system-ui,sans-serif;background:#f8fafc">
+        const csvHtml = (`<html><body style="margin:0;font:13px system-ui,sans-serif;background:#f8fafc">
           <div style="padding:10px 16px;background:#1e293b;color:#e2e8f0;font-weight:600">${esc(name)} &mdash; downloaded from Export CSV</div>
           <div style="overflow:auto;padding:12px"><table style="border-collapse:collapse;background:white">${rows.map((r, i) => `<tr>${r.map((cell) => `<${i ? "td" : "th"} style="border:1px solid #cbd5e1;padding:4px 8px;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;${i ? "" : "background:#e2e8f0"}">${esc(cell)}</${i ? "td" : "th"}>`).join("")}</tr>`).join("")}</table></div></body></html>`);
-        await pause(c.page, 5000);
+        // After the same-origin download, this page's video did not repaint anything until the next app navigation,
+        // so the CSV is shown in its own short clip (part ch05csv), rendered from the downloaded bytes.
+        const v = await context(browser);
+        try {
+          await v.page.setContent(csvHtml);
+          mark(v.page, "csv");
+          await pause(v.page, 5000);
+        } finally { csvPart = { file: await finish(v, "ch05csv"), mobile: false }; }
         await c.page.goto("/demo-store");
         await expect(c.page.getByText("The whole integration")).toBeVisible({ timeout: 30_000 });
+        mark(c.page, "store");
         await pause(c.page, 2500);
         await c.page.locator("pre").first().hover();
+        mark(c.page, "code");
         await pause(c.page, 4000);
-      } finally { clips.ch05 = [{ file: await finish(c, "ch05"), mobile: false }]; }
+      } finally {
+        const main = await finish(c, "ch05");
+        clips.ch05 = csvPart ? [{ file: main, mobile: false }, csvPart] : [{ file: main, mobile: false }];
+      }
     });
 
     let storage: any = null;
@@ -250,16 +300,21 @@ async function main() {
         await expect(row).toBeVisible({ timeout: 60_000 });
         await row.scrollIntoViewIfNeeded();
         await pause(c.page, 1000);
+        mark(c.page, "rowB");
         await row.getByRole("link", { name: "Sell this invoice" }).click();
         await expect(c.page.getByTestId("sell-summary")).toBeVisible({ timeout: 30_000 });
+        mark(c.page, "sellPage");
         await c.page.locator("select").selectOption({ label: "5 minutes (demo)" });
         await c.page.getByLabel("Face value (USDT)").fill(FACE_B);
         await c.page.getByLabel("Price (USDT)").fill(PRICE_B);
         await expect(c.page.getByTestId("sell-summary")).toContainText("price $0.45");
+        mark(c.page, "sellForm");
         await pause(c.page, 1500);
         await c.page.getByRole("button", { name: "Sell for 0.45 USDT" }).click();
+        mark(c.page, "sellClick");
         const listed = c.page.getByText(/Listed as note #\d+/);
         await expect(listed).toBeVisible({ timeout: 120_000 });
+        mark(c.page, "listed");
         state.noteId = Number((await listed.textContent())!.match(/note #(\d+)/)![1]);
         state.listedAt = Date.now();
         log("note", state.noteId);
@@ -273,16 +328,21 @@ async function main() {
         const card = noteCard(inv.page, Number(state.noteId));
         await expect(card).toBeVisible({ timeout: 60_000 });
         await expect(card.getByRole("button", { name: "Fund for 0.45 USDT" })).toBeVisible();
+        mark(inv.page, "notes");
         await pause(inv.page, 2000);
         await inv.page.getByRole("button", { name: /Set up demo investor/i }).click();
+        mark(inv.page, "setupClick");
         await expect(inv.page.getByText(/0\.45 test USDT/)).toBeVisible({ timeout: 120_000 });
+        mark(inv.page, "setupDone");
         await pause(inv.page, 2000);
         const fund = card.getByRole("button", { name: "Fund for 0.45 USDT" });
         await expect(fund).toBeEnabled({ timeout: 30_000 });
         await fund.scrollIntoViewIfNeeded();
         await fund.click();
+        mark(inv.page, "fundClick");
         await expect(card.getByText("Funded the note")).toBeVisible({ timeout: 120_000 });
-        await card.getByText("Funded the note").scrollIntoViewIfNeeded();
+        await card.getByText("Funded the note").evaluate((el) => el.scrollIntoView({ block: "center" }));
+        mark(inv.page, "funded");
         await pause(inv.page, 3500);
         await harvest(inv.page, "ch06");
         storage = await inv.ctx.storageState(); // in memory only: holds the fresh investor demo wallet
@@ -307,19 +367,22 @@ async function main() {
         await expect(row).toBeVisible({ timeout: 60_000 });
         await row.scrollIntoViewIfNeeded();
         const pub = row.getByRole("button", { name: "Publish PDF to Swarm" });
+        mark(c.page, "row");
         if (await pub.isVisible().catch(() => false)) {
           await pause(c.page, 1000);
           await pub.click();
+          mark(c.page, "publishClick");
           await expect(row.getByTestId("swarm-link")).toBeVisible({ timeout: 150_000 });
+          mark(c.page, "published");
           await pause(c.page, 2000);
         }
         await harvest(c.page, "ch09");
-        const arkiv = await row.getByRole("link", { name: "Arkiv record" }).getAttribute("href", { timeout: 3000 }).catch(() => null)
-          ?? (await api("GET", `/invoices/${invoiceA}`)).body?.arkivUrl ?? null;
+        const arkiv: string | null = (await api("GET", `/invoices/${invoiceA}`)).body?.arkivUrl ?? null;
         state.arkivA = String(arkiv);
         await c.page.goto(`/r/${invoiceA}`);
         const open = c.page.getByRole("link", { name: "Open PDF on Swarm" });
         await expect(open).toBeVisible({ timeout: 60_000 });
+        mark(c.page, "receipt");
         await pause(c.page, 2500);
         await open.hover();
         await pause(c.page, 800);
@@ -327,10 +390,12 @@ async function main() {
         state.swarmUrlA = href;
         await harvest(c.page, "ch09");
         await c.page.goto(href, { timeout: 90_000 }); // same tab, so one clip (Chromium's PDF viewer)
+        mark(c.page, "pdf");
         await pause(c.page, 5000);
         if (arkiv) {
           await c.page.goto(arkiv, { timeout: 60_000 });
           await c.page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
+          mark(c.page, "arkiv");
           await pause(c.page, 3500);
           await c.page.mouse.wheel(0, 400);
           await pause(c.page, 4000);
@@ -344,6 +409,7 @@ async function main() {
         await c.page.goto(`/onboard?wallet=${DEMO_MERCHANT}`, { waitUntil: "networkidle" });
         await expect(c.page.getByTestId("verified")).toBeVisible({ timeout: 30_000 });
         await c.page.getByTestId("verified").scrollIntoViewIfNeeded();
+        mark(c.page, "verified");
         await pause(c.page, 4000);
         // a fresh, unverified merchant (new wallet, real Arkiv merchant record)
         const wallet = privateKeyToAccount(generatePrivateKey()).address;
@@ -351,13 +417,17 @@ async function main() {
         log("fresh merchant", wallet, m.status);
         state.freshMerchant = wallet;
         await c.page.goto(`/onboard?wallet=${wallet}`, { waitUntil: "networkidle" });
+        mark(c.page, "freshPage");
         await pause(c.page, 2000);
         await c.page.getByTestId("verify-button").click();
+        mark(c.page, "verifyClick");
         await c.page.getByRole("link", { name: "Use the simulator" }).waitFor({ timeout: 60_000 });
+        mark(c.page, "idkit");
         await pause(c.page, 3000);
         await c.page.getByRole("dialog").getByRole("button").first().click();
         await expect(c.page.getByTestId("locked")).toBeVisible({ timeout: 30_000 });
         await c.page.getByTestId("locked").scrollIntoViewIfNeeded();
+        mark(c.page, "locked");
         await pause(c.page, 4500);
         // the relayer refuses a gasless payment for this unverified merchant
         const inv = await api("POST", "/invoices", { merchant: wallet, amountUsdt: "1", dueAt: Math.floor(Date.now() / 1000) + 7 * 86400, memo: "unverified merchant (recording)" });
@@ -370,9 +440,10 @@ async function main() {
         state.relayUnverified = `${relay.status} ${JSON.stringify(relay.body)}`;
         log("relay for unverified merchant ->", state.relayUnverified);
         await c.page.setContent(`<html><body style="margin:0;background:#0f172a;color:#e2e8f0;font:22px ui-monospace,monospace;padding:60px">
-          <div style="color:#94a3b8">$ curl -X POST ${API}/relay  # gasless payment for the unverified merchant</div>
+          <div style="color:#94a3b8">$ curl -X POST ${API}/relay  # unverified merchant</div>
           <div style="margin-top:24px">HTTP ${relay.status}</div>
           <pre style="white-space:pre-wrap;color:#fda4af">${JSON.stringify(relay.body, null, 2).replace(/</g, "&lt;")}</pre></body></html>`);
+        mark(c.page, "relay");
         await pause(c.page, 5000);
       } finally { clips.ch10 = [{ file: await finish(c, "ch10"), mobile: false }]; }
     });
@@ -394,14 +465,17 @@ async function main() {
         await expect(card).toBeVisible({ timeout: 60_000 });
         const btn = card.getByRole("button", { name: "Try a transfer after maturity" });
         await expect(btn).toBeEnabled({ timeout: 90_000 });
-        await btn.scrollIntoViewIfNeeded();
+        await btn.evaluate((el) => el.scrollIntoView({ block: "center" }));
+        mark(c.page, "card");
         await pause(c.page, 2000);
         await btn.click();
+        mark(c.page, "tryClick");
         await expect(card.getByTestId("revert")).toContainText(/Reverted:/, { timeout: 60_000 });
         state.revert = (await card.getByTestId("revert").textContent()) ?? "";
         log("revert:", state.revert);
-        await card.getByTestId("revert").scrollIntoViewIfNeeded();
-        await pause(c.page, 4000);
+        await card.getByTestId("revert").evaluate((el) => el.scrollIntoView({ block: "center" }));
+        mark(c.page, "revert");
+        await pause(c.page, 6000);
       } finally { clips.ch07 = [{ file: await finish(c, "ch07"), mobile: false }]; }
     });
 
@@ -414,14 +488,28 @@ async function main() {
         await expect(card).toBeVisible({ timeout: 60_000 });
         const settle = card.getByRole("button", { name: /^Settle: pay/ });
         await expect(settle).toBeEnabled({ timeout: 120_000 });
-        await settle.scrollIntoViewIfNeeded();
+        await settle.evaluate((el) => el.scrollIntoView({ block: "center" }));
+        mark(c.page, "card");
         await pause(c.page, 2000);
         await settle.click();
+        mark(c.page, "settleClick");
         await expect(c.page.getByText("Settled in USDT").first()).toBeVisible({ timeout: 120_000 });
+        mark(c.page, "settled");
         await pause(c.page, 2000);
         await harvest(c.page, "ch08");
-        await c.page.getByText("Settled in USDT").first().scrollIntoViewIfNeeded();
+        // the settled note card (it moves to the end of the list), then the settle tx on the explorer
+        const done = c.page.locator("div").filter({ hasText: new RegExp(`Note #${state.noteId}(?!\\d)`) }).filter({ hasText: "Escrow for settlement" }).filter({ hasText: "Settled in USDT" }).last();
+        await done.evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => {});
+        mark(c.page, "settledCard");
         await pause(c.page, 3500);
+        const settleTx = found.filter((f) => f.chapter === "ch08" && /\/tx\//.test(f.href)).pop()?.href;
+        if (settleTx) {
+          state.settleTx = settleTx;
+          await c.page.goto(settleTx, { timeout: 60_000 });
+          await c.page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
+          mark(c.page, "explorer");
+          await pause(c.page, 6000);
+        }
       } finally { clips.ch08 = [{ file: await finish(c, "ch08"), mobile: false }]; }
     });
     // Short no-spend pick-up shots, appended to ch08 / ch09 by hand (ffmpeg concat) after run 3:
