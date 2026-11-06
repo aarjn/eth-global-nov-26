@@ -493,7 +493,8 @@ async function main() {
         await pause(c.page, 2000);
         await settle.click();
         mark(c.page, "settleClick");
-        await expect(c.page.getByText("Settled in USDT").first()).toBeVisible({ timeout: 120_000 });
+        // scoped to this note's card: older settled notes on the page show the same text (run 4 matched one)
+        await expect(card.getByText("Settled in USDT").first()).toBeVisible({ timeout: 120_000 });
         mark(c.page, "settled");
         await pause(c.page, 2000);
         await harvest(c.page, "ch08");
@@ -521,6 +522,7 @@ async function main() {
         const card = c.page.locator("div").filter({ hasText: new RegExp(`Note #${state.noteId}(?!\\d)`) }).filter({ hasText: "Escrow for settlement" }).filter({ hasText: "Settled in USDT" }).last();
         await expect(card).toBeVisible({ timeout: 60_000 });
         await card.evaluate((el) => el.scrollIntoView({ block: "center" }));
+        mark(c.page, "settledCard");
         await pause(c.page, 4500);
         await harvest(c.page, "ch08");
         const settle = found.find((f) => f.chapter === "ch08" && /\/tx\//.test(f.href) && /settled/i.test(f.label)) ?? found.filter((f) => f.chapter === "ch08" && /\/tx\//.test(f.href)).pop();
@@ -529,6 +531,7 @@ async function main() {
           state.settleTx = settleHref;
           await c.page.goto(settleHref, { timeout: 60_000 });
           await c.page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
+          mark(c.page, "explorer");
           await pause(c.page, 6000);
         }
       } finally { clips["ch08-tail"] = [{ file: await finish(c, "ch08-tail"), mobile: false }]; }

@@ -96,3 +96,39 @@ Swarm PDF of invoice A: https://api.gateway.ethswarm.org/bzz/531b98a17a59319b450
 ### Notes
 - No app code was changed for the recording.
 - ch08's first take ended with the settled note pushed below the fold, and the Arkiv record link is not shown on a paid invoice row, so two short no-spend pick-up shots (settled card + settle tx; invoice A's Arkiv entity) were recorded right after and appended to ch08 and ch09.
+
+## Run 4 (v2 recording)
+2026-11-07 04:02-04:11 IST, against the hosted app https://paisalink.tailcdec7a.ts.net (new UI, commit 32a4164). Script: `apps/web/e2e/record/record-demo.ts` (video only, no trace), one live run, every chapter passed. Same amounts as run 3: invoice A 1.00, refund 0.20, invoice B face 0.50 sold for 0.45, maturity "5 minutes (demo)". Faucet 36.928987 -> 34.978987 USDT (1.95 spent). One no-spend pick-up shot afterwards (`ch08-tail`: the settled note card and the settle tx page). Cut to the voice clips by `scripts/cut-v2.ts` into `recordings/v2/`, muxed to `recordings/paisalink-demo-v2.mp4` (2:13).
+
+### Transactions (Whitechain, all checked with `cast receipt`, status 1)
+| Step | What it shows | Tx hash | Explorer | Status |
+|---|---|---|---|---|
+| Invoice A create (1.00) | relayer creates invoice A on PaymentRouter | 0x923b41b0ac44b8cc61e6c098ba4b4fe2d5feaf949b04e786f8212a71b94877c6 | https://explorer.testnet.whitechain.io/tx/0x923b41b0ac44b8cc61e6c098ba4b4fe2d5feaf949b04e786f8212a71b94877c6 | 1 |
+| Faucet to payer A (1.00) | demo faucet test USDT | 0x03ee9faf528e2a6e73dae0fec5cb59ab9b8c3ad40abd18628da78120fc8c2432 | https://explorer.testnet.whitechain.io/tx/0x03ee9faf528e2a6e73dae0fec5cb59ab9b8c3ad40abd18628da78120fc8c2432 | 1 |
+| Gasless pay A (1.00) | payer signs, relayer sends payWithAuthorization | 0xb96cc45e02706a80f1ca04371c151de2e273cbc7e23b1ae656bfba5aac1a0d02 | https://explorer.testnet.whitechain.io/tx/0xb96cc45e02706a80f1ca04371c151de2e273cbc7e23b1ae656bfba5aac1a0d02 | 1 |
+| Partial refund 0.20 | merchant refunds the payer | 0xe0631b2371ec948db28cff02bba874ec17b96d3def71b864cce3594fe17c1cfb | https://explorer.testnet.whitechain.io/tx/0xe0631b2371ec948db28cff02bba874ec17b96d3def71b864cce3594fe17c1cfb | 1 |
+| Invoice B create (0.50) | invoice to be financed | 0x90e6a3adaef8798872a35c85bfb57dc122e0f14d69795c7893efa17518a3521d | https://explorer.testnet.whitechain.io/tx/0x90e6a3adaef8798872a35c85bfb57dc122e0f14d69795c7893efa17518a3521d | 1 |
+| Note issue (#3, face 0.50, price 0.45) | invoice B listed as a note | 0xeb88f4f93c295bc9b611915d0ea29b5aa6090ccdfe8d0655ed41307483cfa8ee | https://explorer.testnet.whitechain.io/tx/0xeb88f4f93c295bc9b611915d0ea29b5aa6090ccdfe8d0655ed41307483cfa8ee | 1 |
+| Investor allowlist | demo compliance desk | 0xe531a4a4557f0716f7d129be45daa8d0246dcff17ec75914fbb546e344997b93 | https://explorer.testnet.whitechain.io/tx/0xe531a4a4557f0716f7d129be45daa8d0246dcff17ec75914fbb546e344997b93 | 1 |
+| Investor gas | test WBT to the investor | 0x1ffedf0dea6a9be1a5a9803b8c709383f87025d28270b76183d0403d3e00becb | https://explorer.testnet.whitechain.io/tx/0x1ffedf0dea6a9be1a5a9803b8c709383f87025d28270b76183d0403d3e00becb | 1 |
+| Faucet to investor (0.45) | test USDT for the note price | 0xf0983838e504ae974cf2ae665d4140ddf588dc14f82c744d23a89c6a4d2665c5 | https://explorer.testnet.whitechain.io/tx/0xf0983838e504ae974cf2ae665d4140ddf588dc14f82c744d23a89c6a4d2665c5 | 1 |
+| USDT approve | investor approves InvoiceNote | 0x046467210680c3b6c5fde25741f44b1a62d638309bdccf99f2347ee0e3d5d1c2 | https://explorer.testnet.whitechain.io/tx/0x046467210680c3b6c5fde25741f44b1a62d638309bdccf99f2347ee0e3d5d1c2 | 1 |
+| Investor fund | investor buys note #3, 0.45 USDT to the merchant | 0x940d52691cc6e00ae1efe7252a685fb31d7aef7da69d1121a281bf10e61b1d8f | https://explorer.testnet.whitechain.io/tx/0x940d52691cc6e00ae1efe7252a685fb31d7aef7da69d1121a281bf10e61b1d8f | 1 |
+| Faucet to payer B (0.50) | test USDT for invoice B's customer | 0x46274a5c5342132a9c141f40cfb075b654d9b6fb4c806d38eef41a2b951cdeec | https://explorer.testnet.whitechain.io/tx/0x46274a5c5342132a9c141f40cfb075b654d9b6fb4c806d38eef41a2b951cdeec | 1 |
+| Escrowed customer pay B (0.50) | gasless pay, forwarded to the note escrow | 0x7e007c35225267e880584a03277e0f0341ad6969841d6ece4d94740a1b6c1a84 | https://explorer.testnet.whitechain.io/tx/0x7e007c35225267e880584a03277e0f0341ad6969841d6ece4d94740a1b6c1a84 | 1 |
+| Rule refusal | transfer after maturity, simulated from the holder's wallet | - (reverts, no tx) | UI: `Reverted: MaturityPassed(1794004816)` | revert |
+| Settle note #3 | holder 0x3eBF…3651 receives the 0.50 face value | 0xdb49ed035d1152b626a1413c3cd4d8a4be56c057c520e965caa26b3a52a4b519 | https://explorer.testnet.whitechain.io/tx/0xdb49ed035d1152b626a1413c3cd4d8a4be56c057c520e965caa26b3a52a4b519 | 1 |
+| Unverified merchant invoice (ch10) | fresh merchant 0x0082…1fAF; its relay was refused (403 MERCHANT_NOT_VERIFIED, no tx) | 0x70f59ae5a97de6fac713928818c866c1f76c48234b3d5343eb28a07061d4f434 | https://explorer.testnet.whitechain.io/tx/0x70f59ae5a97de6fac713928818c866c1f76c48234b3d5343eb28a07061d4f434 | 1 |
+
+Two more invoice-create txs (0xce6e7901…, 0xc2ba7d84…) come from the no-spend dry runs of ch10 against the hosted app at 03:48 and 03:54 IST (fresh unverified merchants; relayer gas only).
+
+### Arkiv entities (Rabdi)
+- Invoice A (paid, swarm_ref set): https://rabdi.explorer.arkiv.network/entity/0x9794872cb9e52c87577d9d0557e7e484dbde825e3d2903e8cbddad783e787620
+- Payment A: https://rabdi.explorer.arkiv.network/entity/0x8bcb594bb1054fe3c5610d7c0c5757c0c28f6d6d27dad06b412dd1a8cc66a697
+- Invoice B (settled): https://rabdi.explorer.arkiv.network/entity/0xc7aab21fcc449cec530e80508ce46a683a468eca23cb7e53068c8509eec6d88c
+- Payment B: https://rabdi.explorer.arkiv.network/entity/0xf3751f63b851ccfeb95ed917c95243c3569050808c408c2fedb3c0fea3ec06eb
+- Fresh unverified merchant (verified=false): https://rabdi.explorer.arkiv.network/entity/0xa1681846697cc7708c197cca40ee01bc6b8de88c86072ffd0d8c71ff7c07eeb3
+
+Swarm PDF of invoice A: https://api.gateway.ethswarm.org/bzz/b61682da9dcaf9eed8c0417afd6dfde41ce55a32415414838cec858564217902/
+
+Recorder fixes for this run (test code only, no app change): the CSV view is its own clip (the page's video did not repaint after the same-origin download); ch08 waited on the text "Settled in USDT", which an older settled note already showed, so the settle footage ends early and the pick-up shot covers the settled card and tx.
