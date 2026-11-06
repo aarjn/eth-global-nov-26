@@ -61,4 +61,4 @@ Record one file per chapter and name it `ch01.m4a` to `ch11.m4a`. The coordinato
 
 ## Timestamps for the README
 
-After the final cut, copy the real start time of each chapter into the "Video chapters" table in `README.md`. The times in the table above are planned. Replace them with the real ones.
+The real v2 chapter start times (video 2:13, about 2:15) are in the "Video chapters" table in `README.md`. The times in the table above are the original plan.

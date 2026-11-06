@@ -46,7 +46,7 @@ Paying in a stablecoin fixes the cost and the wait. It creates new problems. The
 
 ## Screenshots
 
-Captured by the live Playwright runs and saved in `apps/web/e2e/screenshots/`. Run 3 (the recording run, 7 Nov 2026) evidence is in [`docs/live-run.md`](docs/live-run.md); rows that have no saved image point to the explorer or Arkiv entity instead.
+Captured by the live Playwright runs and saved in `apps/web/e2e/screenshots/`. Run 4 (the v2 recording run, 7 Nov 2026) and run 3 evidence is in [`docs/live-run.md`](docs/live-run.md); rows that have no saved image point to the explorer or Arkiv entity instead.
 
 | # | Screen | File |
 |---|---|---|
@@ -202,7 +202,7 @@ Everything below is a testnet shortcut. Each one is labelled in the UI.
 | **`POST /notes/demo-investor`: "demo compliance desk"** | The contract owner (the "compliance officer") allowlists the browser demo investor and sends it a little WBT for gas (`apps/api/src/routes/notes.ts:490`). On chain 1874 only, rate-limited, labelled in the UI. | A compliance officer allowlists an investor after KYC. Nobody is allowlisted automatically. |
 | **Swarm public gateway** | PDFs go up through the Swarm Foundation public gateway, which uses its own postage batch. We do not own a batch and can't see its ID or lifetime ([`arkiv/swarm.md`](arkiv/swarm.md)). | Our own Bee node and our own postage batch. |
 | **World ID staging** | The World app uses the staging environment and the simulator, not the real World App with a real Orb credential. | Production environment and real Proof of Human. |
-| **Short maturity** | Demo notes mature after about 120 seconds so the whole lifecycle fits in a video. | Real due dates, for example 30 days. |
+| **Short maturity** | Demo notes mature after 5 minutes (demo) so the whole lifecycle fits in a video. | Real due dates, for example 30 days. |
 | **Test USDT** | The official Whitechain testnet USDT, from the faucet and the testnet swap. It is not a token we minted. It has no value. | Mainnet USDT. |
 | **Single Arkiv writer** | One server wallet writes all entities (`ownedBy(writer)` filters reads). | Merchant-owned entities with per-wallet writers, or an access-controlled writer set. |
 
@@ -290,7 +290,14 @@ Deployer / owner: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. Relayer / operat
 |---|---|---|
 | Deploy PaymentRouter | `0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf` | [tx](https://explorer.testnet.whitechain.io/tx/0xe9182174222dd560741c8b6d5866ea13a5186a024c15b7d1b3020172243bfdcf) |
 | Deploy InvoiceNote | `0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf` | [tx](https://explorer.testnet.whitechain.io/tx/0x74a875fc9ea553a46c53439553bfca2c36b8cd660cda2ac10331fc688ceaccaf) |
-| **Run 3 (full lifecycle, recording run)** | | |
+| **Run 4 (v2 recording, headline evidence, 7 Nov 2026)** | | |
+| Gasless USDT payment (`payWithAuthorization`, payer paid no gas), 1.00 USDT | `0xb96cc45e02706a80f1ca04371c151de2e273cbc7e23b1ae656bfba5aac1a0d02` | [tx](https://explorer.testnet.whitechain.io/tx/0xb96cc45e02706a80f1ca04371c151de2e273cbc7e23b1ae656bfba5aac1a0d02) |
+| Partial refund, 0.20 USDT | `0xe0631b2371ec948db28cff02bba874ec17b96d3def71b864cce3594fe17c1cfb` | [tx](https://explorer.testnet.whitechain.io/tx/0xe0631b2371ec948db28cff02bba874ec17b96d3def71b864cce3594fe17c1cfb) |
+| Note issued, note #3, face 0.50, price 0.45 | `0xeb88f4f93c295bc9b611915d0ea29b5aa6090ccdfe8d0655ed41307483cfa8ee` | [tx](https://explorer.testnet.whitechain.io/tx/0xeb88f4f93c295bc9b611915d0ea29b5aa6090ccdfe8d0655ed41307483cfa8ee) |
+| Note funded by the investor (`fund`), 0.45 USDT to the merchant | `0x940d52691cc6e00ae1efe7252a685fb31d7aef7da69d1121a281bf10e61b1d8f` | [tx](https://explorer.testnet.whitechain.io/tx/0x940d52691cc6e00ae1efe7252a685fb31d7aef7da69d1121a281bf10e61b1d8f) |
+| Escrowed customer pay of invoice B, 0.50 USDT | `0x7e007c35225267e880584a03277e0f0341ad6969841d6ece4d94740a1b6c1a84` | [tx](https://explorer.testnet.whitechain.io/tx/0x7e007c35225267e880584a03277e0f0341ad6969841d6ece4d94740a1b6c1a84) |
+| Note #3 settled in USDT (`settle`), holder receives 0.50 USDT | `0xdb49ed035d1152b626a1413c3cd4d8a4be56c057c520e965caa26b3a52a4b519` | [tx](https://explorer.testnet.whitechain.io/tx/0xdb49ed035d1152b626a1413c3cd4d8a4be56c057c520e965caa26b3a52a4b519) |
+| **Run 3 (extra evidence, earlier full lifecycle)** | | |
 | Invoice A create, 1.00 USDT | `0xcd2f292049c0d1413d33cbc650eda19480fcce9db1d0bc8eb38132a749413721` | [tx](https://explorer.testnet.whitechain.io/tx/0xcd2f292049c0d1413d33cbc650eda19480fcce9db1d0bc8eb38132a749413721) |
 | Gasless USDT payment (`payWithAuthorization`, payer paid no gas), 1.00 USDT | `0x0f89c838aacf418f6b020e4b58e5dca368109d53bf716a5463b493af89a3bf75` | [tx](https://explorer.testnet.whitechain.io/tx/0x0f89c838aacf418f6b020e4b58e5dca368109d53bf716a5463b493af89a3bf75) |
 | Partial refund, 0.20 USDT | `0x97f679d331148c9b9c90975eb161e774e97fb1f02c2f2d0eb905d15a44a0eb8f` | [tx](https://explorer.testnet.whitechain.io/tx/0x97f679d331148c9b9c90975eb161e774e97fb1f02c2f2d0eb905d15a44a0eb8f) |
@@ -307,7 +314,7 @@ Deployer / owner: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`. Relayer / operat
 | Partial refund (`refundWithSig`), 0.90 USDT (live run 2) | `0x0405f8d08472299c173a757d0ab59eb6d06b93ecb1b1491e71d8f9d2fb3c5335` | [tx](https://explorer.testnet.whitechain.io/tx/0x0405f8d08472299c173a757d0ab59eb6d06b93ecb1b1491e71d8f9d2fb3c5335) |
 | Note issued, note #1, face 1.00, price 0.95 (live run 2) | `0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea` | [tx](https://explorer.testnet.whitechain.io/tx/0x1aa3d9187194912ed5c8d9f12b306ddc3993b4398fcd1deb5ede02537e690dea) |
 
-All run 3 hashes were checked with `cast receipt` (status 1). Full list, with the Arkiv entities and Swarm PDF: [`docs/live-run.md`](docs/live-run.md).
+All run 3 and run 4 hashes were checked with `cast receipt` (status 1). Full list, with the Arkiv entities and Swarm PDF: [`docs/live-run.md`](docs/live-run.md).
 
 ## Arkiv: writer wallet and a runnable query
 
@@ -385,24 +392,29 @@ The code was written by Claude agents. Opus wrote the code. Sonnet wrote tests a
 
 ## Video chapters
 
-`PENDING(cut)`: timestamps are filled in after the final cut.
+Chapter start times in the v2 recording (2:13 in total).
 
 | Time | Chapter |
 |---|---|
-| `PENDING(cut)` | Problem |
-| `PENDING(cut)` | Invoice created (Arkiv entity) |
-| `PENDING(cut)` | Gasless pay on a phone |
-| `PENDING(cut)` | Live dashboard, refund |
-| `PENDING(cut)` | CSV and Swarm PDF |
-| `PENDING(cut)` | Sell the invoice, rule refusal, settle |
-| `PENDING(cut)` | World ID denied, then verified |
-| `PENDING(cut)` | What breaks without each sponsor |
+| 0:00 | Title: the problem |
+| 0:13 | Create an invoice (Arkiv entity) |
+| 0:24 | The phone pays, gasless |
+| 0:32 | Paid on the dashboard, refund |
+| 0:43 | CSV and the demo store |
+| 0:53 | Sell the invoice, fund the note |
+| 1:07 | Rule refused (`MaturityPassed`) |
+| 1:19 | Settle |
+| 1:30 | Swarm receipt and Arkiv entity |
+| 1:39 | World ID denied, then verified |
+| 1:56 | Close: what breaks without each sponsor |
 
 ## Licence
 
 MIT. See [`LICENSE`](LICENSE). Copyright (c) 2026 aarjn.
 
 ### Third-party UI credits
+
+The UI is built with Magic UI (MIT) and Motion.
 
 - [Magic UI](https://magicui.design) (MIT, (c) Magic UI): adapted copies of `number-ticker`, `shimmer-button`, `blur-fade`, `animated-beam`, and ideas from `confetti` and `avatar-circles`, in `apps/web/src/components/magicui/` (its MIT notice is in `LICENSE.md` there).
 - [Motion](https://motion.dev) (`motion` 12.43.0, MIT): animations in the web app.

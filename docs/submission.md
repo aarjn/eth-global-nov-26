@@ -9,7 +9,7 @@ PaisaLink
 ## Links
 
 - Repo: <https://github.com/aarjn/eth-global-nov-26>
-- Demo video: `TODO(owner): video URL` (about 3:00, 1080p, the builder's own voice)
+- Demo video: `TODO(owner): video URL` (about 2:15, 1080p, the builder's own voice)
 - Live app: <https://paisalink.tailcdec7a.ts.net> (API health: <https://paisalink.tailcdec7a.ts.net/api/health>). Try it: open <https://paisalink.tailcdec7a.ts.net/merchant> to create an invoice, then open the pay link on a phone. `/demo-store` shows the widget, `/invest` the notes, `/onboard` World ID. This is Whitechain testnet only. The demo faucet's test USDT is nearly used up, so a judge may not be able to complete a payment; the demo video shows the full live flow. To run it locally instead, see Setup in the README.
 - Contracts: PaymentRouter `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005` ([explorer](https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005?tab=contract)), InvoiceNote `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7` ([explorer](https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7?tab=contract))
 - Arkiv writer wallet: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`
@@ -42,6 +42,7 @@ Everything shown runs on testnets. Test shortcuts are labelled in the UI and lis
 - **Files (Swarm, bee-js 13.2.0, pdf-lib):** one PDF per invoice with no personal data, uploaded as a plain (unencrypted) reference. The reference is in the `swarm_ref` field of the invoice entity.
 - **Identity (World IDKit 4.6.0):** Proof of Human in staging, with the proof verified on the server and the nullifier stored off-chain.
 - **Hard parts:** the USDT has no `version()` or `eip712Domain()`, so we found the EIP-712 domain version by brute force against `DOMAIN_SEPARATOR`. Arkiv's hub can't be driven by a script, and a 429 lockout can last about 27 minutes, so we built a rate-limit breaker. IDKit has no server-side verify helper, so we wrote one, including a signal-binding check.
+- **UI:** built with Magic UI (MIT) and Motion.
 - **Built by:** one human directing Claude agents (Opus for code, Sonnet for tests and docs, Fable for research and the plan). See the AI disclosure below.
 
 ## What is live and what is a demo shortcut
@@ -54,7 +55,7 @@ Demo shortcuts (all labelled in the UI):
 - `/notes/demo-investor`, a "demo compliance desk" that allowlists the demo investor. In production a compliance officer would do it after KYC.
 - The Swarm Foundation public gateway, with its own postage batch.
 - World ID staging with the simulator.
-- A 120-second note maturity so the lifecycle fits in a video.
+- A 5 minute (demo) note maturity so the lifecycle fits in a video.
 
 ## What breaks without each sponsor
 
