@@ -35,7 +35,7 @@ export default function ReceiptPage({ params }: { params: Record<string, string>
     return () => clearInterval(t);
   }, [data, load]);
 
-  return <div className="min-h-dvh bg-canvas print:bg-white">
+  return <div className="min-h-dvh overflow-x-clip bg-canvas print:bg-white">
     <div className="mx-auto max-w-lg px-5 py-6 sm:py-10">
       <div className="flex items-center justify-between print:hidden"><a href="/"><Logo className="text-lg" /></a>
         {data && <Button variant="secondary" onClick={() => window.print()}>Print / Save PDF</Button>}</div>

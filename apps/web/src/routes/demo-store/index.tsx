@@ -23,7 +23,7 @@ export default function DemoStore() {
   const lines = source.trimEnd().split("\n");
   const code = tab === "react" ? source.trimEnd() : embedSnippet(location.origin, import.meta.env.VITE_API_URL || "http://localhost:8787");
 
-  return <div className="min-h-dvh bg-[#fbf7f1] text-stone-900">
+  return <div className="min-h-dvh overflow-x-clip bg-[#fbf7f1] text-stone-900">
     <div className="bg-stone-900 py-2 text-center text-xs font-semibold text-stone-100">
       Demo store: a separate fictional shop that embeds the PaisaLink widget · testnet only · <Link href="/merchant" className="underline">PaisaLink dashboard</Link>
     </div>

@@ -11,13 +11,13 @@ const nav = [
 
 export function Shell({ children, wide = true }: { children: ReactNode; wide?: boolean }) {
   const { pathname } = useLocation();
-  return <div className="min-h-dvh bg-canvas">
+  return <div className="min-h-dvh overflow-x-clip bg-canvas">
     <header className="sticky top-0 z-20 border-b border-ink-900/5 bg-white/80 backdrop-blur">
       <div className={cx("mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-6", wide ? "max-w-6xl" : "max-w-3xl")}>
         <Link href="/" aria-label="PaisaLink home"><Logo /></Link>
-        <nav className="-mx-1 flex w-full gap-1 overflow-x-auto text-sm [scrollbar-width:none] sm:ml-auto sm:w-auto">
+        <nav className="-mx-1 flex w-full flex-wrap gap-0.5 text-[13px] sm:ml-auto sm:w-auto sm:flex-nowrap sm:gap-1 sm:text-sm">
           {nav.map((n) => <Link key={n.href} href={n.href}
-            className={cx("whitespace-nowrap rounded-xl px-3 py-1.5 font-semibold transition",
+            className={cx("whitespace-nowrap rounded-xl px-2.5 py-1.5 font-semibold transition sm:px-3",
               pathname.startsWith(n.href) ? "bg-brand-50 text-brand-800" : "text-ink-600 hover:bg-ink-900/5 hover:text-ink-900")}>{n.label}</Link>)}
         </nav>
       </div>

@@ -20,7 +20,7 @@ export default function Home() {
           <Link href="/demo-store" className="rounded-2xl bg-white px-5 py-3.5 font-semibold text-ink-900 ring-1 ring-ink-900/10 hover:bg-ink-50">Try the demo store</Link>
         </div>
       </div>
-      <div className="relative">
+      <div className="relative overflow-x-clip md:overflow-visible">
         <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-gradient-to-br from-brand-200/60 via-white to-amber-100/60 blur-2xl" />
         <div className="mx-auto w-full max-w-sm rounded-[2rem] bg-white p-6 shadow-card ring-1 ring-ink-900/5">
           <p className="text-sm font-semibold text-ink-500">Invoice from @priya.designs</p>
