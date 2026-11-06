@@ -14,3 +14,4 @@ contracts/broadcast/*/dry-run/
 apps/web/test-results/
 apps/web/playwright-report/
 video/raw/
+.env.override

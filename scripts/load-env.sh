@@ -28,5 +28,9 @@ while IFS= read -r line; do
   fi
   printf '%s=%s\n' "$k" "$v" >> "$out"
 done < .env.example
+# Machine-specific overrides (git-ignored), e.g. a Tailscale URL for phone testing
+if [[ -f .env.override ]]; then
+  while IFS= read -r l; do [[ -z "$l" || "$l" == \#* ]] && continue; k=${l%%=*}; sed -i "/^$k=/d" "$out"; echo "$l" >> "$out"; done < .env.override
+fi
 missing=$(grep -E '^[A-Z_]+=$' "$out" | cut -d= -f1 | tr '\n' ' ')
 echo "wrote $out (missing: ${missing:-none})"
