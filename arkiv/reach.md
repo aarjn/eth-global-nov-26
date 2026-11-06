@@ -20,7 +20,7 @@ Criterion: *Who is it for, and would they use it? Can they try it today, and wil
 ## Can they try it today?
 
 - **Yes, on testnet.** The app runs on Whitechain Sepolia, Arkiv Rabdi and World ID staging. No real money is involved.
-- Live app: No public hosted URL; the app runs locally (see Setup in the README) and the demo video shows the live testnet flow. Run it, open `/merchant` to create an invoice, then open the link on a phone.
+- Live app: <https://paisalink.tailcdec7a.ts.net>. Try it: open <https://paisalink.tailcdec7a.ts.net/merchant> to create an invoice, then open the pay link on a phone. `/demo-store` shows the widget, `/invest` the notes, `/onboard` World ID. This is Whitechain testnet only. The demo faucet's test USDT is nearly used up, so a judge may not be able to complete a payment; the demo video shows the full live flow.
 - **Judges can reproduce it from the repo** in a few commands (README, "Setup from a clean machine").
 - **A judge can query the data without us.** `bun run scripts/query.ts` reads our entities straight from Arkiv:
 

@@ -10,7 +10,7 @@ PaisaLink
 
 - Repo: <https://github.com/aarjn/eth-global-nov-26>
 - Demo video: `TODO(owner): video URL` (about 3:00, 1080p, the builder's own voice)
-- Live app: no public hosted URL. The app runs locally (see Setup in the README). The demo video shows the live testnet flow.
+- Live app: <https://paisalink.tailcdec7a.ts.net> (API health: <https://paisalink.tailcdec7a.ts.net/api/health>). Try it: open <https://paisalink.tailcdec7a.ts.net/merchant> to create an invoice, then open the pay link on a phone. `/demo-store` shows the widget, `/invest` the notes, `/onboard` World ID. This is Whitechain testnet only. The demo faucet's test USDT is nearly used up, so a judge may not be able to complete a payment; the demo video shows the full live flow. To run it locally instead, see Setup in the README.
 - Contracts: PaymentRouter `0x97613d5bE2c3dd747c110b460Ff2e0FC69701005` ([explorer](https://explorer.testnet.whitechain.io/address/0x97613d5bE2c3dd747c110b460Ff2e0FC69701005?tab=contract)), InvoiceNote `0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7` ([explorer](https://explorer.testnet.whitechain.io/address/0x9e9Fa5E8857a309C51d18822182e9BDcd0117Ac7?tab=contract))
 - Arkiv writer wallet: `0xf4a0841215766eAD8239d223E4E8caB91ff1fDeb`
 - Arkiv entity example: <https://rabdi.explorer.arkiv.network/entity/0x2a687bca3e74ad2e7155e364a2bda5c7381b233df9fafd49357317c75f4ce648>

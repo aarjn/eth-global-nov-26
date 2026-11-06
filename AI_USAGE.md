@@ -39,6 +39,8 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | W8 | `docs/prompts/W8-live-flow.md` | Opus | `scripts/pool-usdt.ts`, faucet amount cap (`apps/api/src/demo.ts`, `/pay` and `/invest` pages), `.env.override` values, live spec amounts |
 | S4 | `docs/prompts/S4-live-run.md` | Sonnet | The live testnet run 2, `docs/live-run.md` |
 | R1 | `docs/prompts/R1-record-demo.md` | Opus | `apps/web/e2e/record/*`, `scripts/mux-video.sh`, `recordings/` clips, the run 3 section of `docs/live-run.md` |
+| H1 | no saved prompt | Opus 5.5 | Hosting: `Dockerfile`, `.dockerignore`, `scripts/serve.ts`, `scripts/serve-lib.ts`, `scripts/serve.test.ts`, `scripts/deploy-host.sh`, `docs/hosting-paisalink.md` |
+| S7 | no saved prompt | Sonnet 5.5 | Live-link wording in `README.md`, `docs/submission.md`, `arkiv/reach.md`; this file |
 | S5 | `docs/prompts/S5-fill-live.md` | Sonnet | Live evidence in `README.md` and `docs/submission.md`, `docs/demo-script.md` amounts, `docs/owner-todo.md`, this file |
 | S3 | `docs/prompts/S3-paperwork.md` | Sonnet | README, this file, feedback files, `arkiv/*.md`, submission text, demo script |
 | Common rules | `docs/prompts/common.md` | all | Rules every agent follows (no secrets, no git, file ownership) |
@@ -134,6 +136,8 @@ ETHGlobal's rules ask every team to say where and how AI tools were used. This f
 | `apps/web/e2e/record/*`, `scripts/mux-video.sh`, `recordings/README.txt` | Opus (R1) | Demo footage recorder and the audio/video joiner. Clips in `recordings/` are not committed |
 | `apps/web/e2e/record/record-demo.ts`, `scripts/mux-video.sh`, the run 3 section of `docs/live-run.md` | Opus 5.5 (R1) | Demo recorder, audio/video joiner and run 3 evidence |
 | `README.md`, `docs/submission.md`, `arkiv/reach.md`, `AI_USAGE.md` (final pass: run 3 hashes, test counts, no-public-URL wording) | Sonnet 5.5 (S6) | Test suites re-run on 7 Nov 2026; hashes checked with `cast receipt` |
+| `Dockerfile`, `.dockerignore`, `scripts/serve.ts`, `scripts/serve-lib.ts`, `scripts/serve.test.ts`, `scripts/deploy-host.sh`, `docs/hosting-paisalink.md` | Opus 5.5 (H1) | Single-container hosting (Dokku + Tailscale Funnel) |
+| Live-link wording in `README.md`, `docs/submission.md`, `arkiv/reach.md` | Sonnet 5.5 (S7) | Replaced the no-public-URL text with the live link |
 | `docs/owner-todo.md`, the live evidence and amounts in `README.md`, `docs/submission.md`, `docs/demo-script.md` | Sonnet (S5) | Filled from `contracts/deployments/1874.json`, `docs/live-run.md` and on-chain receipts |
 
 ## Code Garage items used

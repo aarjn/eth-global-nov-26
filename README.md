@@ -5,7 +5,7 @@
 Built solo by [@aarjn](https://github.com/aarjn) for ETHGlobal Mumbai 2026 (Classic track). Sponsors: Whitechain, Arkiv, World. Everything runs on testnets. No real money is involved.
 
 - Demo video (3 min): `TODO(owner): video URL` (after the owner uploads it)
-- Live app: no public hosted URL. The app runs locally (see Setup). The demo video shows the live testnet flow.
+- Live app: <https://paisalink.tailcdec7a.ts.net> (API health: <https://paisalink.tailcdec7a.ts.net/api/health>). Try it: open <https://paisalink.tailcdec7a.ts.net/merchant> to create an invoice, then open the pay link on a phone. `/demo-store` shows the widget, `/invest` the notes, `/onboard` World ID. This is Whitechain testnet only. The demo faucet's test USDT is nearly used up, so a judge may not be able to complete a payment; the demo video shows the full live flow.
 - Submission text: [`docs/submission.md`](docs/submission.md)
 - Demo narration and shot list: [`docs/demo-script.md`](docs/demo-script.md)
 
@@ -62,6 +62,8 @@ Captured by the live Playwright runs and saved in `apps/web/e2e/screenshots/`. R
 | 10 | `/demo-store` next to its 19-line source | `apps/web/e2e/screenshots/desktop-demo-store.png` |
 
 ## Architecture
+
+**Hosting:** one container on the builder's own server (Dokku + Tailscale Funnel), serving the web app at `/` and the API at `/api`. See [`docs/hosting-paisalink.md`](docs/hosting-paisalink.md).
 
 ```mermaid
 flowchart LR
@@ -257,7 +259,7 @@ bun run dev:api
 bun run dev:web
 ```
 
-Then open `http://localhost:5173/merchant`. Useful extras:
+Then open `http://localhost:5173/merchant` (local Setup only; the public app is at the link above). Useful extras:
 
 ```bash
 bun --env-file=.env.local scripts/fund-demo.ts --balances        # WBT and USDT of all demo wallets
