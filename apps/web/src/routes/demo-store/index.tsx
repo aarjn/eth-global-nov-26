@@ -26,7 +26,7 @@ export default function DemoStore() {
 
   return <div className="min-h-dvh overflow-x-clip bg-[#fbf7f1] text-stone-900">
     <div className="bg-stone-900 py-2 text-center text-xs font-semibold text-stone-100">
-      Demo store: a separate fictional shop that embeds the PaisaLink widget · testnet only · <Link href="/merchant" className="underline">PaisaLink dashboard</Link>
+      Chhaap & Co. uses PaisaLink checkout · Whitechain testnet · <Link href="/merchant" className="underline">PaisaLink dashboard</Link>
     </div>
     <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
       <span className="font-serif text-2xl font-bold tracking-tight">Chhaap <span className="text-orange-700">&amp;</span> Co.</span>
@@ -50,8 +50,8 @@ export default function DemoStore() {
           <p className="mt-5 text-4xl font-extrabold">${DEMO_PRICE} <span className="text-base font-semibold text-stone-500">paid as {DEMO_PRICE} USDT</span></p>
           <div className="mt-6 font-bold text-emerald-800 [&_a]:underline"><StoreCheckout merchant={merchant} amount={DEMO_PRICE} /></div>
           {unregistered && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-900 ring-1 ring-amber-200">
-            This demo shop pays your dashboard's demo merchant, which has no profile yet. <Link href="/merchant" className="underline">Create a handle on the dashboard</Link> first.</p>}
-          <p className="mt-4 text-xs text-stone-500">Pays merchant <span className="font-mono">{short(merchant)}</span>{import.meta.env.VITE_STORE_MERCHANT ? "" : " (this browser's demo merchant wallet)"}.</p>
+            This shop pays your dashboard's merchant, which has no profile yet. <Link href="/merchant" className="underline">Create a handle on the dashboard</Link> first.</p>}
+          <p className="mt-4 text-xs text-stone-500">Pays merchant <span className="font-mono">{short(merchant)}</span>{import.meta.env.VITE_STORE_MERCHANT ? "" : " (this browser's merchant wallet)"}.</p>
         </div>
       </section>
 

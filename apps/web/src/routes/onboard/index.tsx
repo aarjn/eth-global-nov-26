@@ -112,7 +112,7 @@ export default function OnboardPage() {
       {isDemo ? <DemoWalletTag address={wallet} role="merchant" /> : <Badge>Merchant wallet · {short(wallet)}</Badge>}
       {merchant?.handle && <Badge>@{merchant.handle}</Badge>}
     </div>
-    {badWallet && <div className="mt-4"><Alert tone="amber">The wallet in the link isn't a valid address, so this page uses your demo merchant wallet instead.</Alert></div>}
+    {badWallet && <div className="mt-4"><Alert tone="amber">The wallet in the link isn't a valid address, so this page uses your merchant wallet instead.</Alert></div>}
 
     <Card className="mt-6 p-5 sm:p-7">
       {verified ? <VerifiedPanel /> : <>
@@ -135,7 +135,7 @@ export default function OnboardPage() {
             {phase === "verifying" ? "Checking your proof…" : "Verify with World ID"}
           </Button>
           {cfg?.environment === "staging" && <p className="mt-3 text-xs text-ink-500">
-            Testnet demo: this uses World ID <b>staging</b>. Scan the QR code with the <a className="font-semibold underline" href={cfg.simulatorUrl ?? SIMULATOR_URL} target="_blank" rel="noreferrer">World ID simulator</a> (or use the simulator link inside the dialog).
+            Testnet: this uses World ID <b>staging</b>. Scan the QR code with the <a className="font-semibold underline" href={cfg.simulatorUrl ?? SIMULATOR_URL} target="_blank" rel="noreferrer">World ID simulator</a> (or use the simulator link inside the dialog).
           </p>}
         </div>}
 

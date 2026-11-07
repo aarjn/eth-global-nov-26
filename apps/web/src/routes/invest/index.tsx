@@ -65,7 +65,7 @@ export default function InvestPage() {
     const txs: { label: string; hash: string }[] = [];
     try {
       const d = await api.post<DeskResp>("/notes/demo-investor", { address: investor.address });
-      if (d.allowlistTx) txs.push({ label: "Allowlisted by the demo compliance desk", hash: d.allowlistTx });
+      if (d.allowlistTx) txs.push({ label: "Allowlisted by the compliance desk", hash: d.allowlistTx });
       if (d.gasTx) txs.push({ label: "Test WBT for gas", hash: d.gasTx });
       try {
         // ask only for the price of the newest note still for sale (capped by the faucet): test USDT is scarce
@@ -120,10 +120,10 @@ export default function InvestPage() {
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <span><span className="text-ink-400">USDT</span> <b className="tabular-nums">{me.usdt === null ? "…" : money(formatUsdt(me.usdt))}</b></span>
           <span><span className="text-ink-400">WBT (gas)</span> <b className="tabular-nums">{me.wbt === null ? "…" : Number(formatEther(me.wbt)).toFixed(4)}</b></span>
-          {note && !ready && <Button onClick={setupInvestor} loading={setup.busy}>Set up demo investor</Button>}
+          {note && !ready && <Button onClick={setupInvestor} loading={setup.busy}>Set up investor</Button>}
         </div>
       </div>
-      {note && !ready && <p className="mt-3 text-xs text-ink-500">Testnet demo only: the PaisaLink compliance desk allowlists this browser wallet, sends a little test WBT for gas, and the demo faucet sends test USDT.
+      {note && !ready && <p className="mt-3 text-xs text-ink-500">Testnet only: the PaisaLink compliance desk allowlists this browser wallet, sends a little test WBT for gas, and the testnet faucet sends test USDT.
         In production the compliance officer (the contract owner) allowlists investors after KYC. No real value.</p>}
       {setup.err && <div className="mt-3"><Alert>{setup.err}</Alert></div>}
       {setup.txs.length > 0 && <ul className="mt-3 space-y-1">{setup.txs.map((t) => <li key={t.hash} className="flex items-center gap-2 text-sm"><span className="text-ink-500">{t.label}</span><TxLink hash={t.hash} label="explorer" /></li>)}</ul>}

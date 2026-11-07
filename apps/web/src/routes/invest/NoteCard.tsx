@@ -116,8 +116,8 @@ export function NoteCard({ row, note, investor, nowSec, investorAllowed, investo
       </>}
       {state === "funded" && matured && <Button onClick={settle} loading={busy === "Settling…"} disabled={!!busy || escrowShort || !hasGas}>Settle: pay {money(row.faceUsdt)} USDT to the holder</Button>}
     </div>
-    {state === "issued" && investorAllowed === false && <p className="mt-2 text-xs text-amber-700">Your demo investor wallet is not allowlisted yet. Use "Set up demo investor" above.</p>}
-    {state === "funded" && iHold && !matured && to.toLowerCase() === DEMO_PAYER.toLowerCase() && <p className="mt-2 text-xs text-ink-500">Default target: the PaisaLink demo payer wallet, allowlisted at deploy.</p>}
+    {state === "issued" && investorAllowed === false && <p className="mt-2 text-xs text-amber-700">Your investor wallet is not allowlisted yet. Use "Set up investor" above.</p>}
+    {state === "funded" && iHold && !matured && to.toLowerCase() === DEMO_PAYER.toLowerCase() && <p className="mt-2 text-xs text-ink-500">Default target: the PaisaLink test payer wallet, allowlisted at deploy.</p>}
     {state === "funded" && escrowShort && <p className="mt-2 text-sm text-ink-600">
       Waiting for the customer to pay the invoice: the payment goes straight into this note's escrow.{" "}
       <Link className="font-semibold text-brand-700 hover:underline" href={`/pay/${row.invoiceId}`}>Open the payment link</Link>.

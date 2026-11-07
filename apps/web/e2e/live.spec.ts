@@ -174,7 +174,7 @@ test.describe("live flow", () => {
     invoiceB = r.id;
     await page.goto(`/invest?invoice=${invoiceB}`);
     await expect(page.getByTestId("sell-summary")).toBeVisible();
-    await page.locator("select").selectOption({ label: "5 minutes (demo)" });
+    await page.locator("select").selectOption({ label: "5 minutes (testnet)" });
     // the sell UI takes a price (default 97.5% of face); set it to 0.95 for face 1.00
     await page.getByLabel("Face value (USDT)").fill(AMOUNT_B);
     await page.getByLabel("Price (USDT)").fill(PRICE_B);
@@ -194,7 +194,7 @@ test.describe("live flow", () => {
     // (0.95), so a list that has not loaded yet would draw the full faucet cap.
     await expect(card).toBeVisible({ timeout: 60_000 });
     await expect(card.getByRole("button", { name: "Fund for 0.95 USDT" })).toBeVisible();
-    await inv.getByRole("button", { name: /Set up demo investor/i }).click();
+    await inv.getByRole("button", { name: /Set up investor/i }).click();
     await expect(inv.getByText(/0\.95 test USDT/)).toBeVisible({ timeout: 120_000 });
     await expect(card.getByRole("button", { name: "Fund for 0.95 USDT" })).toBeEnabled({ timeout: 30_000 });
     await card.getByRole("button", { name: "Fund for 0.95 USDT" }).click();

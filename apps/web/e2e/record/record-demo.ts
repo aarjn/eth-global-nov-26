@@ -23,8 +23,8 @@ const AMOUNT_A = "1.00", REFUND_A = "0.20", FACE_B = "0.50", PRICE_B = "0.45";
 const DESK = { width: 1440, height: 810 };   // upscaled to 1920x1080 by ffmpeg (bigger, readable text)
 const PHONE = { width: 390, height: 844 };
 const run = Date.now().toString(36);
-const memoA = `Logo design, 2 revisions (${run})`;
-const memoB = `Brand guide for Chhaap & Co. (${run})`;
+const memoA = "Logo design, 2 revisions";
+const memoB = "Brand guide for Chhaap & Co.";
 
 const only = process.argv.slice(2);
 const want = (ch: string) => (only.length === 0 && !ch.includes("-")) || only.includes(ch); // "-tail" chapters: only on request
@@ -304,7 +304,7 @@ async function main() {
         await row.getByRole("link", { name: "Sell this invoice" }).click();
         await expect(c.page.getByTestId("sell-summary")).toBeVisible({ timeout: 30_000 });
         mark(c.page, "sellPage");
-        await c.page.locator("select").selectOption({ label: "5 minutes (demo)" });
+        await c.page.locator("select").selectOption({ label: "5 minutes (testnet)" });
         await c.page.getByLabel("Face value (USDT)").fill(FACE_B);
         await c.page.getByLabel("Price (USDT)").fill(PRICE_B);
         await expect(c.page.getByTestId("sell-summary")).toContainText("price $0.45");
@@ -330,7 +330,7 @@ async function main() {
         await expect(card.getByRole("button", { name: "Fund for 0.45 USDT" })).toBeVisible();
         mark(inv.page, "notes");
         await pause(inv.page, 2000);
-        await inv.page.getByRole("button", { name: /Set up demo investor/i }).click();
+        await inv.page.getByRole("button", { name: /Set up investor/i }).click();
         mark(inv.page, "setupClick");
         await expect(inv.page.getByText(/0\.45 test USDT/)).toBeVisible({ timeout: 120_000 });
         mark(inv.page, "setupDone");
@@ -413,7 +413,11 @@ async function main() {
         await pause(c.page, 4000);
         // a fresh, unverified merchant (new wallet, real Arkiv merchant record)
         const wallet = privateKeyToAccount(generatePrivateKey()).address;
-        const m = await api("POST", "/merchants", { wallet, handle: `rec${run}` });
+        let m = { status: 0 } as { status: number };
+        for (const handle of ["meera.studio", "kavya.crafts", "rohan.films", "anika.writes", "dev.illustrates"]) {
+          m = await api("POST", "/merchants", { wallet, handle });
+          if (m.status >= 200 && m.status < 300) break;
+        }
         log("fresh merchant", wallet, m.status);
         state.freshMerchant = wallet;
         await c.page.goto(`/onboard?wallet=${wallet}`, { waitUntil: "networkidle" });
@@ -430,7 +434,7 @@ async function main() {
         mark(c.page, "locked");
         await pause(c.page, 4500);
         // the relayer refuses a gasless payment for this unverified merchant
-        const inv = await api("POST", "/invoices", { merchant: wallet, amountUsdt: "1", dueAt: Math.floor(Date.now() / 1000) + 7 * 86400, memo: "unverified merchant (recording)" });
+        const inv = await api("POST", "/invoices", { merchant: wallet, amountUsdt: "1", dueAt: Math.floor(Date.now() / 1000) + 7 * 86400, memo: "Wedding invitation design" });
         const router = (await api("GET", "/config")).body.paymentRouter;
         const relay = await api("POST", "/relay", {
           invoiceId: inv.body?.invoiceId,

@@ -23,7 +23,7 @@ export default function Home() {
         <p className="mt-5 max-w-xl text-lg text-ink-600">PaisaLink turns an invoice into a payment link. Your client pays in USDT, a dollar stablecoin, without fees or set-up. You see it land live.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/merchant" className="rounded-2xl bg-gradient-to-b from-brand-500 to-brand-700 px-5 py-3.5 font-semibold text-white shadow-brand transition hover:from-brand-600 hover:to-brand-800 active:translate-y-px">Open my dashboard</Link>
-          <Link href="/demo-store" className="rounded-2xl bg-white px-5 py-3.5 font-semibold text-ink-900 ring-1 ring-ink-900/10 transition hover:bg-ink-50">Try the demo store</Link>
+          <Link href="/demo-store" className="rounded-2xl bg-white px-5 py-3.5 font-semibold text-ink-900 ring-1 ring-ink-900/10 transition hover:bg-ink-50">See an example shop</Link>
         </div>
         <div className="mt-8 flex items-center gap-3">
           <AvatarGroup people={[{ name: "Priya", tone: "brand" }, { name: "Arjun", tone: "saffron" }, { name: "Meera", tone: "violet" }, { name: "Kabir", tone: "sky" }]} />

@@ -11,8 +11,8 @@ import { money } from "../../lib/format";
 import { discount, type NoteRow } from "./lib";
 
 const MATURITIES = [
-  { sec: 120, label: "2 minutes (demo)" },
-  { sec: 300, label: "5 minutes (demo)" },
+  { sec: 120, label: "2 minutes (testnet)" },
+  { sec: 300, label: "5 minutes (testnet)" },
   { sec: 30 * 86400, label: "30 days" },
   { sec: 60 * 86400, label: "60 days" },
   { sec: 90 * 86400, label: "90 days" },
@@ -97,7 +97,7 @@ export function SellInvoice({ invoiceId, existing, onIssued }: { invoiceId: Hex;
           <TxLink hash={done.txHash} label="View the listing transaction" />
           {done.storeWarning && <p className="text-xs text-amber-700">Saved on chain; the Arkiv record will catch up ({done.storeWarning}).</p>}
         </div>
-        : !mine ? <div className="mt-4"><Alert tone="amber">Only the merchant wallet that created this invoice can sell it. Open this page in the browser that holds that merchant's demo wallet.</Alert></div>
+        : !mine ? <div className="mt-4"><Alert tone="amber">Only the merchant wallet that created this invoice can sell it. Open this page in the browser that holds that merchant's wallet.</Alert></div>
         : inv.state !== "open" ? <div className="mt-4"><Alert tone="amber">Only unpaid (open) invoices can be sold. This one is {inv.state}.</Alert></div>
         : <>
           <p className="mt-4 text-base font-semibold text-ink-900" data-testid="sell-summary">

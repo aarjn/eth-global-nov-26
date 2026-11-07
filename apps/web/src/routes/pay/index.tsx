@@ -95,7 +95,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
     try {
       // ask only for what this invoice needs (the faucet caps it at DEMO_FUND_USDT): test USDT is scarce
       await api.post("/demo/fund", { address: payer.address, amountUsdt: invoice?.amountUsdt });
-      setNotice("Test USDT is on its way to your demo wallet…");
+      setNotice("Test USDT is on its way to your wallet…");
       for (let i = 0; i < 30; i++) {
         const b = await refreshBalance();
         if (b !== null && b >= amount) break;
@@ -221,7 +221,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
 
           {balance !== null && !enough && phase !== "funding" ? <>
             <Button className="w-full py-4 text-lg" onClick={getTestUsdt}>Get test USDT</Button>
-            <p className="mt-2 text-center text-xs text-ink-500">Your demo wallet is empty. This sends free <b>testnet</b> USDT to it (demo only).</p>
+            <p className="mt-2 text-center text-xs text-ink-500">Your wallet is empty. This sends free <b>testnet</b> USDT to it.</p>
           </> : <Button shimmer className="w-full py-4 text-lg" onClick={pay} loading={busy} disabled={balance === null || busy || router === undefined} data-testid="pay-button">
             {phase === "funding" ? "Adding test USDT…" : phase === "approving" ? "Approving…" : phase === "sending" ? "Sending payment…" : `Pay ${money(invoice.amountUsdt)} USDT`}
           </Button>}
@@ -238,7 +238,7 @@ export default function PayPage({ params }: { params: Record<string, string> }) 
               <span className="text-xs font-semibold text-ink-600">Paying from your wallet · {payer.address.slice(0, 6)}…{payer.address.slice(-4)}</span>}
             <span className="tabular text-xs text-ink-500">Balance: {balance === null ? "…" : `${money(formatUsdt(balance))} USDT`}</span>
             {payer.kind === "demo" && eth() && <button type="button" onClick={pickInjected} className="text-xs font-semibold text-brand-700 underline">Use my own wallet instead</button>}
-            {payer.kind === "injected" && <button type="button" onClick={() => setPayer({ kind: "demo", address: demo.address })} className="text-xs font-semibold text-brand-700 underline">Use the demo wallet</button>}
+            {payer.kind === "injected" && <button type="button" onClick={() => setPayer({ kind: "demo", address: demo.address })} className="text-xs font-semibold text-brand-700 underline">Use the browser wallet</button>}
           </div>
         </div>}
       </>}

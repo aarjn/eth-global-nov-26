@@ -12,7 +12,7 @@ test.describe("pages render", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Get paid from abroad");
     await expect(page.getByRole("link", { name: "Open my dashboard" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Try the demo store" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "See an example shop" })).toBeVisible();
     await noHorizontalScroll(page);
     await shot(page, info, "home");
     expect(errors).toEqual([]);

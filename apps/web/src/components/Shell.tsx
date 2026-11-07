@@ -6,7 +6,7 @@ const nav = [
   { href: "/merchant", label: "Dashboard" },
   { href: "/invest", label: "Finance" },
   { href: "/onboard", label: "Verify" },
-  { href: "/demo-store", label: "Demo store" },
+  { href: "/demo-store", label: "Example shop" },
 ];
 
 export function Shell({ children, wide = true }: { children: ReactNode; wide?: boolean }) {
@@ -23,6 +23,6 @@ export function Shell({ children, wide = true }: { children: ReactNode; wide?: b
       </div>
     </header>
     <main className={cx("mx-auto px-4 py-6 sm:px-6 sm:py-10", wide ? "max-w-6xl" : "max-w-3xl")}>{children}</main>
-    <footer className="pb-10 text-center text-xs text-ink-400">Made with care in India 🇮🇳 · PaisaLink · testnet demo · settlement in USDT</footer>
+    <footer className="pb-10 text-center text-xs text-ink-400">Made with care in India 🇮🇳 · PaisaLink · Whitechain testnet · settlement in USDT</footer>
   </div>;
 }

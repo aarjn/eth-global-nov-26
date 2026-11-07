@@ -62,9 +62,9 @@ export function Badge({ children, tone = "ink" }: { children: ReactNode; tone?: 
 /** Honest label for the browser-local key. Required wherever a demo wallet is used. */
 export function DemoWalletTag({ address, role }: { address: string; role: string }) {
   return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200"
-    title={`A browser-local testnet demo ${role} wallet: ${address}. The key is stored only in this browser. Not for real funds.`}>
+    title={`A browser-local testnet ${role} wallet: ${address}. The key is stored only in this browser. Not for real funds.`}>
     <svg className="size-3" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-    Testnet demo {role} wallet · {short(address)}
+    Testnet {role} wallet · {short(address)}
   </span>;
 }
 
