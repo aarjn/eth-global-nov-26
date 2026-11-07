@@ -1,16 +1,35 @@
 # AI usage
 
-ETHGlobal's rules ask every team to say where and how AI tools were used. This file is kept up to date during the build.
+ETHGlobal's rules ask every team to say where and how AI tools were used. This file answers that, and was kept up to date during the build.
 
-## Short version
+## My role (aarjn, solo builder)
 
-- **Team:** one human, aarjn.
-- **The code was written by Claude agents.** Claude Opus wrote the application code and contracts. Claude Sonnet wrote tests and paperwork. Claude Fable did the research and wrote the plan. The agents ran in parallel, each on its own workstream and its own files.
-- **The human directed and reviewed.** aarjn chose the product, the sponsors and the trade-offs (`DECISIONS.md`), approved the plan, funded the testnet wallets and made the faucet and hub sign-ins that agents can't do, tested on a phone, visited the sponsor booths, and wrote the "own notes" sections of the feedback files. The narration of the demo video is the human's own voice (no text-to-speech).
-- **What the human did not do:** write the Solidity, TypeScript or tests line by line. We say this plainly so nobody has to guess.
-- **Specs, prompts and plans are in the repo:** the plan is `PLAN.md`, the specs are in `docs/specs/`, and every agent's prompt is saved unchanged in `docs/prompts/`.
-- **Commits** are made by the coordinator under the human's name after review. Git history shows who committed, not who wrote the code. This file shows who wrote the code.
-- **Created after kickoff:** the repository was created after the hackathon began. `TODO(owner): confirm the exact repo creation time and the ETHGlobal desk's answer on AI-assisted solo projects.`
+I built PaisaLink alone. I acted as product owner and decision-maker, and used Claude Code (Anthropic) agents to do most of the hands-on drafting, coding and writing under my direction.
+
+What I decided and did myself:
+
+- **The problem and the product.** Payments from abroad for Indian freelancers and small exporters, with a link the client can pay without crypto knowledge.
+- **The partner tracks and scope.** Whitechain, Arkiv (plus the Swarm bonus) and World, and what to leave out. My trade-offs are recorded in `DECISIONS.md`.
+- **Approval of every plan.** Each plan and agent brief was reviewed by me before work started. Every brief is saved unchanged in `docs/prompts/`.
+- **Product calls during the build.**
+  - Small demo amounts so the test USDT would last.
+  - Keeping a clearly labelled demo compliance desk for investors.
+  - A warmer UI.
+  - Hosting the app on my own server.
+  - When to make the repo public.
+- **Real-world steps.** I funded the testnet wallets, did the faucet and hub sign-ins, tested on my phone, asked questions at the sponsor booths, and wrote the "own notes" in the feedback files.
+- **The demo video narration** is my own recorded voice. No text-to-speech was used.
+- **The final submission.**
+
+## What AI did
+
+- **Code:** Claude agents wrote most of it: the Solidity contracts and tests, the API and relayer, the web app and widget, and the scripts. I did not write these line by line, and I say that plainly so nobody has to guess.
+- **Models:**
+  - Claude Fable researched the sponsor tracks and drafted the plan (`PLAN.md`, specs in `docs/specs/`) for my review.
+  - Claude Opus wrote the application code and contracts.
+  - Claude Sonnet wrote tests, ran checks and drafted the docs.
+- **Commits** were made under my name after review. Git history shows who committed. The tables below show which agent wrote what.
+- **Timing:** the repository was created after the hackathon began. The first commit is 6 Nov 2026, 05:58 IST.
 
 ## Roles
 
